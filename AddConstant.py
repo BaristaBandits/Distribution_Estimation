@@ -1,99 +1,129 @@
-import math
-import numpy as np
-import matplotlib.pyplot as plt
 from collections import defaultdict, Counter
-from tqdm import tqdm
+import math
 
-class AddConstant:
+class AddConstantBigram:
 
-    def __init__(self, data):
-        self.unigrams = defaultdict(int)
-        self.bigrams = defaultdict(int)
-        self.total_unigrams = 0
-        self.compute_grams(data)
-        self.vocab_size = len(self.unigrams)
-        self.add_constant = 0.75
-        #self.continuations = defaultdict(set)
-
-
-    # Set smoothing parameter
-    def set_lambda(self, add_constant):
+    def __init__(self, add_constant=0.75, topk_cache=None, d_estimate=None):
         self.add_constant = add_constant
 
+        self.unigrams = Counter()
+        self.bigrams = Counter()
+        self.total_unigrams = 0
 
-    # Compute unigram and bigram counts
-    def compute_grams(self, data):
-        for sentence in data:
+        self.vocab = set()
+        self.vocab_size = 0
 
-            tokens = ["<s>"] + sentence.split() + ["</s>"]
+        self.continuations = defaultdict(set)
 
-            for i in range(len(tokens)):
+        # semantic components
+        self.topk_cache = topk_cache or {}
+        self.d_estimate = d_estimate or {}
 
-                self.unigrams[tokens[i]] += 1
+
+    def fit(self, tokenized_sentences):
+        for sent in tokenized_sentences:
+            self.vocab.update(sent)
+
+            for i in range(len(sent)):
+                w = sent[i]
+                self.unigrams[w] += 1
                 self.total_unigrams += 1
 
                 if i > 0:
-                    self.bigrams[(tokens[i-1], tokens[i])] += 1
-                    #self.continuations[tokens[i-1]].add(tokens[i])
+                    h = sent[i - 1]
+                    self.bigrams[(h, w)] += 1
+                    self.continuations[h].add(w)
 
+        self.vocab_size = len(self.vocab)
 
-    # Add-constant bigram probability
-    def compute_probs(self, word1, word2):
+    def prob(self, prev_word, word):
 
-        unigram_count = self.unigrams.get(word1, 0)
-        bigram_count = self.bigrams.get((word1, word2), 0)
+        unigram_count = self.unigrams.get(prev_word, 0)
+        bigram_count = self.bigrams.get((prev_word, word), 0)
 
         numerator = bigram_count + self.add_constant
         denominator = unigram_count + self.add_constant * self.vocab_size
 
         return max(numerator / denominator, 1e-12)
 
-  
-    #Bigram_count for accessing synonym cache
-    def build_bigram_dict(self):
-      bigram_counts = defaultdict(Counter)
+    def semantic_prob(self, prev_word, word, k_syn=5):
 
-      for (w1, w2), count in self.bigrams.items():
-          bigram_counts[w1][w2] = count
+      base_prob = self.prob(prev_word, word)
 
-      return bigram_counts
+      # EXACT match to old behavior
+      synonyms = self.topk_cache.get(prev_word, [])[:k_syn]
+
+      if not synonyms:
+          return base_prob
+
+      n = self.unigrams.get(prev_word, 0)
+
+      if base_prob > 0:
+          d_est = self.d_estimate[prev_word]   # no safety check (same as old)
+          base_weight = 1 / (d_est / (2 * n))
+      else:
+          base_weight = 0
+
+      weighted_prob = base_weight * base_prob
+      total_weight = base_weight
+
+      for s, weight in synonyms:
+          if s != prev_word:
+              prob = self.prob(s, word)
+              weighted_prob += weight * prob
+              total_weight += weight
+
+      return weighted_prob / total_weight
 
 
-    # Next word prediction
-    def predict_next(self, current):
 
-        best_word = None
-        best_probab = 0
+    def perplexity(self, tokenized_sentences, k_syn=0):
 
-        for word2 in self.unigrams:
+      total_tokens = 0
+      log_prob_sum = 0.0
 
-            if word2 == "<s>":
-                continue
+      for sent in tokenized_sentences:
+          if len(sent) < 2:
+              continue
 
-            prob = self.compute_probs(current, word2)
+          for i in range(1, len(sent)):
 
-            if prob > best_probab:
-                best_probab = prob
-                best_word = word2
+              prev_word = sent[i - 1]
+              word = sent[i]
 
-        return best_word, best_probab
-      
-    #This is used for naive empirical d/n interpolation
-    #comment out to experiment
+              try:
+                  if k_syn == 0:
+                      prob = self.prob(prev_word, word)
+                  else:
+                      prob = self.semantic_prob(prev_word, word, k_syn)
 
-    #def compute_d_over_n(self):
+                  if prob <= 0:
+                      prob = 1e-12
 
-      #d_over_n = {}
+                  log_prob_sum += math.log2(prob)
+                  total_tokens += 1
 
-     # for word in self.unigrams:
+              except KeyError:
+                  continue
 
-          #n = self.unigrams.get(word, 0)                 # occurrences
-          #d = len(self.continuations[word])       # distinct next words
+      if total_tokens == 0:
+          return float("inf")
 
-          #if n > 0:
-              #d_over_n[word] = d / n
-          #else:
-              #d_over_n[word] = 0
+      avg_log_prob = log_prob_sum / total_tokens
+      return 2 ** (-avg_log_prob)
 
-      #return d_over_n
+    def compute_d_over_n(self):
+
+        d_over_n = {}
+
+        for word in self.unigrams:
+            n = self.unigrams[word]
+            d = len(self.continuations[word])
+
+            if n > 0:
+                d_over_n[word] = d / n
+            else:
+                d_over_n[word] = 0.0
+
+        return d_over_n
 
