@@ -1,6 +1,30 @@
 import nltk
 nltk.download('punkt_tab')
 import re
+from datasets import load_dataset
+
+def preprocess_sentence(sentence):
+    sentence = sentence.lower()
+
+    # normalize numbers
+    sentence = re.sub(r"\d+", "<num>", sentence)
+
+    # remove urls
+    sentence = re.sub(r"http\S+|www\S+", "<url>", sentence)
+
+    # remove wikipedia references like [1], [23]
+    sentence = re.sub(r"\[\d+\]", "", sentence)
+
+    # separate punctuation
+    sentence = re.sub(r"([.,!?;:()\"'])", r" \1 ", sentence)
+
+    # remove non-ascii characters
+    sentence = re.sub(r"[^\x00-\x7F]+", " ", sentence)
+
+    # collapse multiple spaces
+    sentence = re.sub(r"\s+", " ", sentence)
+
+    return sentence.strip()
 
 
 def build_sentence_corpus(text_list):
@@ -18,17 +42,18 @@ def build_sentence_corpus(text_list):
         for sent in sentences:
             sent = sent.strip().lower()
 
+            # preprocess
+            sent = preprocess_sentence(sent)
+
             # tokenize
             tokens = sent.split()
 
             # add start and end tokens
-            tokens = ["bos"] + tokens + ["eos"]
+            tokens = ["<s>"] + tokens + ["</s>"]
 
             corpus.append(tokens)
 
     return corpus
-
-from datasets import load_dataset
 
 def load_text_corpus(dataset_name="wikitext2"):
 

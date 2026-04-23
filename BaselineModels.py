@@ -1,7 +1,8 @@
 from collections import defaultdict
+from collections import Counter, defaultdict
+import math
 
 class JelinekMercerSmoothing:
-
   def __init__(self, data):
     self.unigrams= defaultdict(int)
     self.bigrams=defaultdict(int)
@@ -9,19 +10,17 @@ class JelinekMercerSmoothing:
     self.compute_grams(data)
     self.lambda_=0.5
     
-  #Set_lambda invoked customly so that class computes unigrams and bigrams only once on the test corpus
+  # Set_lambda invoked customly so that class computes unigrams and bigrams only once on the test corpus
   def set_lambda(self, lambda_):
     self.lambda_=lambda_
     
-  # Assume that the data is a set of all sentences
   def compute_grams(self, data):
     for sentence in data:
-      tokens= ["<s>"] + sentence.split() + ["</s>"]
-      for i in range(len(tokens)):
-        self.unigrams[tokens[i]]+=1
+      for i in range(len(sentence)):
+        self.unigrams[sentence[i]]+=1
         self.total_unigrams+=1
         if i>0:
-          self.bigrams[(tokens[i-1], tokens[i])]+=1
+          self.bigrams[(sentence[i-1], sentence[i])]+=1
 
   # Jelenik mercer smoothing
   def compute_probs(self, word1, word2):
@@ -30,6 +29,40 @@ class JelinekMercerSmoothing:
     unigram_prob = self.unigrams.get(word2, 0)/ self.total_unigrams
     bigram_prob = self.bigrams.get((word1, word2), 0)/ count_word1 if count_word1>0 else 0
     return max(self.lambda_ * bigram_prob + (1 - self.lambda_) * unigram_prob, 1e-12)
+
+  def perplexity(self, tokenized_sentences, k_syn=0):
+    total_tokens = 0
+    log_prob_sum = 0.0
+
+    for sent in tokenized_sentences:
+        if len(sent) < 2:
+            continue
+
+        for i in range(1, len(sent)):
+
+            prev_word = sent[i - 1]
+            word = sent[i]
+
+            try:
+                if k_syn == 0:
+                    prob = self.compute_probs(prev_word, word)
+                else:
+                    prob = self.semantic_prob(prev_word, word, k_syn)
+
+                if prob <= 0:
+                    prob = 1e-12
+
+                log_prob_sum += math.log2(prob)
+                total_tokens += 1
+
+            except KeyError:
+                continue
+
+    if total_tokens == 0:
+        return float("inf")
+
+    avg_log_prob = log_prob_sum / total_tokens
+    return 2 ** (-avg_log_prob)
 
   # Next word predictor
   def predict_next(self, current):
@@ -42,10 +75,6 @@ class JelinekMercerSmoothing:
         best_probab=prob
         best_word = word2
     return best_word, best_probab
-
-
-from collections import Counter, defaultdict
-import math
 
 
 class BigramKneserNeyNaive:
