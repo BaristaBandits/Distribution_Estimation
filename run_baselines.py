@@ -47,10 +47,18 @@ train_corpus, test_corpus = load_text_corpus(args.dataset)
 
 
 # =======================
+# TRACK BEST RESULTS
+# =======================
+best_add = None
+best_jm = None
+best_kn = None
+
+
+# =======================
 # ADD-CONSTANT MODEL
 # =======================
 if args.run_add:
-    print("Running Add-Constant")
+    print("\nRunning Add-Constant")
 
     model = AddConstantBigram()
     model.fit(train_corpus)
@@ -58,11 +66,21 @@ if args.run_add:
     add_constants = np.arange(0.001, 0.010, 0.001)
     perplexities = []
 
+    print("\nAdd-Constant Results:")
     for c in add_constants:
         model.add_constant = c
         ppl = model.perplexity(test_corpus)
         perplexities.append(ppl)
 
+        print(f"c = {c:.4f} → Perplexity = {ppl:.4f}")
+
+    # Find best
+    best_idx = np.argmin(perplexities)
+    best_add = (add_constants[best_idx], perplexities[best_idx])
+
+    print(f"\nBest Add-Constant: c = {best_add[0]:.4f}, PPL = {best_add[1]:.4f}")
+
+    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(add_constants, perplexities, marker='o')
     plt.xlabel("Add Constant")
@@ -76,18 +94,28 @@ if args.run_add:
 # JELINEK-MERCER
 # =======================
 if args.run_jm:
-    print("Running Jelinek-Mercer")
+    print("\nRunning Jelinek-Mercer")
 
     jm_model = JelinekMercerSmoothing(train_corpus)
 
     lambdas = np.arange(0.1, 1.0, 0.1)
     jm_perplexities = []
 
+    print("\nJelinek-Mercer Results:")
     for lam in lambdas:
         jm_model.set_lambda(lam)
         ppl = jm_model.perplexity(test_corpus)
         jm_perplexities.append(ppl)
 
+        print(f"lambda = {lam:.2f} → Perplexity = {ppl:.4f}")
+
+    # Find best
+    best_idx = np.argmin(jm_perplexities)
+    best_jm = (lambdas[best_idx], jm_perplexities[best_idx])
+
+    print(f"\nBest Lambda: {best_jm[0]:.2f}, PPL = {best_jm[1]:.4f}")
+
+    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(lambdas, jm_perplexities, marker='o')
     plt.xlabel("Lambda")
@@ -101,7 +129,7 @@ if args.run_jm:
 # KNESER-NEY
 # =======================
 if args.run_kn:
-    print("Running Kneser-Ney")
+    print("\nRunning Kneser-Ney")
 
     kn_model = BigramKneserNeyNaive()
     kn_model.fit(train_corpus)
@@ -109,11 +137,21 @@ if args.run_kn:
     discounts = np.arange(0.4, 1, 0.05)
     kn_perplexities = []
 
+    print("\nKneser-Ney Results:")
     for d in discounts:
         kn_model.discount = d
         ppl = kn_model.perplexity(test_corpus)
         kn_perplexities.append(ppl)
 
+        print(f"discount = {d:.2f} → Perplexity = {ppl:.4f}")
+
+    # Find best
+    best_idx = np.argmin(kn_perplexities)
+    best_kn = (discounts[best_idx], kn_perplexities[best_idx])
+
+    print(f"\nBest Discount: {best_kn[0]:.2f}, PPL = {best_kn[1]:.4f}")
+
+    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(discounts, kn_perplexities, marker='o')
     plt.xlabel("Discount")
@@ -121,3 +159,18 @@ if args.run_kn:
     plt.title(f"Kneser-Ney ({args.dataset})")
     plt.grid(True)
     plt.show()
+
+
+# =======================
+# FINAL SUMMARY
+# =======================
+print("\n===== BEST PERPLEXITIES =====")
+
+if best_add is not None:
+    print(f"Add-Constant   → c = {best_add[0]:.4f}, PPL = {best_add[1]:.4f}")
+
+if best_jm is not None:
+    print(f"Jelinek-Mercer → lambda = {best_jm[0]:.2f}, PPL = {best_jm[1]:.4f}")
+
+if best_kn is not None:
+    print(f"Kneser-Ney     → discount = {best_kn[0]:.2f}, PPL = {best_kn[1]:.4f}")
