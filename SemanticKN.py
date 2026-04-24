@@ -151,6 +151,8 @@ class SemanticBigramKneserNey:
     # =======================
     def sentence_log_prob(self, sent, k_syn=5):
         log_prob = 0.0
+
+        #Empirical Normalization
         GLOBAL_Z = 1.0369
         for i in range(1, len(sent)):
             if k_syn == 0:
