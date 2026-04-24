@@ -151,12 +151,13 @@ class SemanticBigramKneserNey:
     # =======================
     def sentence_log_prob(self, sent, k_syn=5):
         log_prob = 0.0
-
+        GLOBAL_Z = 1.0369
         for i in range(1, len(sent)):
             if k_syn == 0:
                 p = self.prob(sent[i - 1], sent[i])   #baseline KN
             else:
                 p = self.semantic_prob(sent[i - 1], sent[i], k_syn)
+                p /= GLOBAL_Z 
             log_prob += math.log2(p)
 
         return log_prob
