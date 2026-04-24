@@ -176,3 +176,4 @@ class SemanticBigramKneserNey:
             total_tokens += (len(sent) - 1)
 
         return 2 ** (-total_log_prob / total_tokens)
+
