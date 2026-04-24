@@ -16,20 +16,16 @@ def load_embeddings(mode="glove", checkpoint_path=None, vector_size=100):
 
         return embeddings, stoi, itos
 
-  #WORD2VEC reduced to 100dims with PCA
   elif mode == "word2vec":
-        print("Loading pretrained Word2Vec (Google News 300d)...")
-        model = api.load("word2vec-google-news-300")
+    print("Loading pretrained Word2Vec (Google News 300d)...")
+    model = api.load("word2vec-google-news-300")
 
-        words = model.index_to_key
-        vectors = np.array([model[word] for word in words])
+    words = model.index_to_key
+    vectors = np.array([model[word] for word in words])
 
-        print("Reducing to 100 dimensions using PCA...")
-        pca = PCA(n_components=vector_size)
-        reduced_vectors = pca.fit_transform(vectors)
+    # No PCA — keep original 300d vectors
+    embeddings = {word: vectors[i] for i, word in enumerate(words)}
+    stoi = {word: i for i, word in enumerate(words)}
+    itos = {i: word for i, word in enumerate(words)}
 
-        embeddings = {word: reduced_vectors[i] for i, word in enumerate(words)}
-        stoi = {word: i for i, word in enumerate(words)}
-        itos = {i: word for i, word in enumerate(words)}
-
-        return embeddings, stoi, itos
+    return embeddings, stoi, itos
