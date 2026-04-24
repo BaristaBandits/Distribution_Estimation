@@ -77,6 +77,10 @@ class JelinekMercerSmoothing:
     return best_word, best_probab
 
 
+from collections import Counter, defaultdict
+import math
+
+
 class BigramKneserNeyNaive:
     def __init__(self, discount=0.75, topk_cache=None, d_estimate=None):
         self.discount = discount
