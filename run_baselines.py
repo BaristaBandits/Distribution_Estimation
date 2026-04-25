@@ -106,8 +106,8 @@ if args.run_add:
     plt.ylabel("Perplexity")
     plt.title(f"Add-Constant ({args.dataset}, {args.embeddings})")
     plt.grid(True)
-    plt.show()
     plt.savefig(f"AC_{args.embeddings}_{args.dataset}.png")
+    plt.show()
     plt.close()
 
 
@@ -141,8 +141,8 @@ if args.run_jm:
     plt.ylabel("Perplexity")
     plt.title(f"Jelinek-Mercer ({args.dataset}, {args.embeddings})")
     plt.grid(True)
-    plt.show()
     plt.savefig(f"JM_{args.embeddings}_{args.dataset}.png")
+    plt.show()
     plt.close()
 
 
@@ -177,8 +177,8 @@ if args.run_kn:
     plt.ylabel("Perplexity")
     plt.title(f"Kneser-Ney ({args.dataset}, {args.embeddings})")
     plt.grid(True)
-    plt.show()
     plt.savefig(f"KN_{args.embeddings}_{args.dataset}.png")
+    plt.show()
     plt.close()
 
 
