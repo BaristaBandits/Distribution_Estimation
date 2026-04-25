@@ -107,7 +107,7 @@ if args.run_add:
     plt.title(f"Add-Constant ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
-    plt.savefig(f"AC_{args.embedding}_{args.dataset}.png")
+    plt.savefig(f"AC_{args.embeddings}_{args.dataset}.png")
     plt.close()
 
 
@@ -142,7 +142,7 @@ if args.run_jm:
     plt.title(f"Jelinek-Mercer ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
-    plt.savefig(f"JM_{args.embedding}_{args.dataset}.png")
+    plt.savefig(f"JM_{args.embeddings}_{args.dataset}.png")
     plt.close()
 
 
@@ -178,7 +178,7 @@ if args.run_kn:
     plt.title(f"Kneser-Ney ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
-    plt.savefig(f"KN_{args.embedding}_{args.dataset}.png")
+    plt.savefig(f"KN_{args.embeddings}_{args.dataset}.png")
     plt.close()
 
 
