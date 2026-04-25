@@ -19,17 +19,19 @@ parser.add_argument(
     "--embeddings",
     type=str,
     default="glove",
-    choices=["glove", "word2vec"],
+    choices=["glove", "word2vec", "gpt2"],
 )
 
 parser.add_argument(
     "--dataset",
     type=str,
     default="wikitext2",
-    choices=["wikitext2", "wikitext103"],
+    choices=["wikitext2", "wikitext103", "openwebtext", "wikipedia"],
 )
 
 parser.add_argument("--k_cache", type=int, default=50)
+parser.add_argument("--max_sentences", type=int, default=None)
+
 parser.add_argument("--run_add", action="store_true")
 parser.add_argument("--run_kn", action="store_true")
 
@@ -37,6 +39,15 @@ args = parser.parse_args()
 
 print(f"Using embeddings: {args.embeddings}")
 print(f"Using dataset: {args.dataset}")
+
+
+# =======================
+# TOKENIZER MODE
+# =======================
+if args.embeddings == "gpt2":
+    tokenizer_mode = "gpt2"
+else:
+    tokenizer_mode = "word"
 
 
 # =======================
@@ -48,7 +59,11 @@ embeddings, stoi, itos = load_embeddings(args.embeddings)
 # =======================
 # LOAD DATASET
 # =======================
-train_corpus, test_corpus = load_text_corpus(args.dataset)
+train_corpus, test_corpus = load_text_corpus(
+    args.dataset,
+    tokenizer_mode=tokenizer_mode,
+    max_sentences=args.max_sentences
+)
 
 
 # =======================
@@ -66,7 +81,7 @@ d_estimate, synonym_cache = build_cache(
 
 
 # =========================================================
-#  1. SEMANTIC ADD-CONSTANT
+# 1. SEMANTIC ADD-CONSTANT
 # =========================================================
 if args.run_add:
     print("\nRunning Semantic Add-Constant Model...")
@@ -83,7 +98,7 @@ if args.run_add:
         ppl_list = []
 
         for c in tqdm.tqdm(add_consts, desc="add_const", leave=False):
-            model.add_constant = c   # FIXED name
+            model.add_constant = c
             ppl = model.perplexity(test_corpus, k_syn=k)
             ppl_list.append(ppl)
 
@@ -101,21 +116,21 @@ if args.run_add:
     plt.grid(True)
     plt.show()
 
-
+    # Best per k
     print("\n===== BEST ADD-CONSTANT PER k =====")
 
     for k in k_values:
         ppl_list = results_add[k]
         best_idx = np.argmin(ppl_list)
-    
+
         best_c = add_consts[best_idx]
         best_ppl = ppl_list[best_idx]
-    
+
         print(f"k = {k:2d} → best c = {best_c:.6f}, PPL = {best_ppl:.4f}")
 
 
 # =========================================================
-# 2. SEMANTIC KNESER-NEY (NEW)
+# 2. SEMANTIC KNESER-NEY
 # =========================================================
 if args.run_kn:
     print("\nRunning Semantic Kneser-Ney...")
@@ -123,7 +138,7 @@ if args.run_kn:
     discounts = np.arange(0.5, 0.95, 0.05)
     k_values = [0, 5, 10, 20, 30, 50]
 
-    # store as: {k: [ppl_d1, ppl_d2, ...]}
+    # store correctly: {k: [ppl for each discount]}
     results_kn = {k: [] for k in k_values}
 
     for d in discounts:
@@ -157,17 +172,16 @@ if args.run_kn:
     plt.grid(True)
     plt.show()
 
+    # =======================
+    # BEST DISCOUNT PER k
+    # =======================
     print("\n===== BEST DISCOUNT PER k (Semantic KN) =====")
 
-    for i, k in enumerate(k_values):
-        best_ppl = float("inf")
-        best_d = None
-    
-        for d in discounts:
-            ppl = results_kn[d][i]
-    
-            if ppl < best_ppl:
-                best_ppl = ppl
-                best_d = d
-    
+    for k in k_values:
+        ppl_list = results_kn[k]
+        best_idx = np.argmin(ppl_list)
+
+        best_d = discounts[best_idx]
+        best_ppl = ppl_list[best_idx]
+
         print(f"k = {k:2d} → best discount = {best_d:.2f}, PPL = {best_ppl:.4f}")
