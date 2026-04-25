@@ -30,7 +30,7 @@ def preprocess_sentence(sentence):
     return sentence.strip()
 
 
-def build_sentence_corpus(text_list, tokenizer_mode="word"):
+def build_sentence_corpus(text_list, tokenizer_mode="word", max_sentences=100000):
     corpus = []
 
     for text in text_list:
@@ -52,10 +52,13 @@ def build_sentence_corpus(text_list, tokenizer_mode="word"):
 
             tokens = ["<s>"] + tokens + ["</s>"]
             corpus.append(tokens)
+            
+            if max_sentences and len(corpus) >= max_sentences:
+                return corpus
 
     return corpus
 
-def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word"):   
+def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word", max_sentences=100000):   
 
     # ------------------ LOAD DATA ------------------
     if dataset_name == "wikitext2":
@@ -95,15 +98,15 @@ def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word"):
 
     # ------------------ BUILD CORPUS ------------------
     print("Tokenizing train corpus...")
-    train_corpus = build_sentence_corpus(train_text, tokenizer_mode)
+    train_corpus = build_sentence_corpus(train_text, tokenizer_mode, max_sentences)
 
     print("Tokenizing test corpus...")
-    test_corpus = build_sentence_corpus(test_text, tokenizer_mode)
+    test_corpus = build_sentence_corpus(test_text, tokenizer_mode, max_sentences)
 
     # ------------------ OPTIONAL LIMIT ------------------
 
-    train_corpus = train_corpus[:100000]
-    test_corpus = test_corpus[:10000]
+    train_corpus = train_corpus[:max_sentences]
+    test_corpus = test_corpus[:max_sentences//10]
     print('train size :', len(train_corpus))
     print('test size :', len(test_corpus))
 
