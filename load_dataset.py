@@ -27,31 +27,27 @@ def preprocess_sentence(sentence):
     return sentence.strip()
 
 
-def build_sentence_corpus(text_list):
+def build_sentence_corpus(text_list, max_sentences=10000):
     corpus = []
 
     for text in text_list:
-
-        text = text.strip()
-        # sentence tokenize
         if not text or text.startswith("="):
             continue
 
         sentences = nltk.sent_tokenize(text)
 
         for sent in sentences:
-            sent = sent.strip().lower()
-
-            # preprocess
             sent = preprocess_sentence(sent)
-
-            # tokenize
             tokens = sent.split()
 
-            # add start and end tokens
-            tokens = ["<s>"] + tokens + ["</s>"]
+            if len(tokens) == 0:
+                continue
 
+            tokens = ["<s>"] + tokens + ["</s>"]
             corpus.append(tokens)
+
+            if max_sentences and len(corpus) >= max_sentences:
+                return corpus
 
     return corpus
 
