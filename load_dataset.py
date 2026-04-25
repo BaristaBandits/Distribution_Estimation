@@ -2,6 +2,9 @@ import nltk
 nltk.download('punkt_tab')
 import re
 from datasets import load_dataset
+from transformers import GPT2Tokenizer
+
+gpt2_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 def preprocess_sentence(sentence):
     sentence = sentence.lower()
@@ -27,7 +30,7 @@ def preprocess_sentence(sentence):
     return sentence.strip()
 
 
-def build_sentence_corpus(text_list, max_sentences=10000):
+def build_sentence_corpus(text_list, tokenizer_mode="word"):
     corpus = []
 
     for text in text_list:
@@ -38,7 +41,11 @@ def build_sentence_corpus(text_list, max_sentences=10000):
 
         for sent in sentences:
             sent = preprocess_sentence(sent)
-            tokens = sent.split()
+
+            if tokenizer_mode == "gpt2":
+                tokens = gpt2_tokenizer.tokenize(sent)
+            else:
+                tokens = sent.split()
 
             if len(tokens) == 0:
                 continue
@@ -46,13 +53,9 @@ def build_sentence_corpus(text_list, max_sentences=10000):
             tokens = ["<s>"] + tokens + ["</s>"]
             corpus.append(tokens)
 
-            if max_sentences and len(corpus) >= max_sentences:
-                return corpus
-
     return corpus
 
-
-def load_text_corpus(dataset_name="wikitext2"):
+def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word"):   
 
     # ------------------ LOAD DATA ------------------
     if dataset_name == "wikitext2":
@@ -92,10 +95,10 @@ def load_text_corpus(dataset_name="wikitext2"):
 
     # ------------------ BUILD CORPUS ------------------
     print("Tokenizing train corpus...")
-    train_corpus = build_sentence_corpus(train_text)
+    train_corpus = build_sentence_corpus(train_text, tokenizer_mode)
 
     print("Tokenizing test corpus...")
-    test_corpus = build_sentence_corpus(test_text)
+    test_corpus = build_sentence_corpus(test_text, tokenizer_mode)
 
     # ------------------ OPTIONAL LIMIT ------------------
 
