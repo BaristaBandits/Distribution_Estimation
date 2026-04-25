@@ -83,7 +83,7 @@ def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word", max_senten
         test_text = train_text[split_idx:]
         train_text = train_text[:split_idx]
 
-   elif dataset_name == "wikipedia":
+    elif dataset_name == "wikipedia":
         dataset = load_dataset(
             "wikimedia/wikipedia",
             "20231101.en",
