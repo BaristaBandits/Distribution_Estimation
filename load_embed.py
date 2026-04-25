@@ -3,7 +3,7 @@ from sklearn.decomposition import PCA
 import numpy as np
 import torch
 import os
-
+from transformers import GPT2Tokenizer, GPT2Model
 
 def load_embeddings(mode="glove", checkpoint_path=None, vector_size=100):
 
@@ -27,5 +27,23 @@ def load_embeddings(mode="glove", checkpoint_path=None, vector_size=100):
     embeddings = {word: vectors[i] for i, word in enumerate(words)}
     stoi = {word: i for i, word in enumerate(words)}
     itos = {i: word for i, word in enumerate(words)}
+
+    return embeddings, stoi, itos
+
+  elif mode == "gpt2":
+    print("Loading GPT-2 embeddings (768d)...")
+
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    model = GPT2Model.from_pretrained("gpt2")
+
+    embedding_matrix = model.get_input_embeddings().weight.detach().cpu().numpy()
+
+    vocab = tokenizer.get_vocab()  # token -> id
+
+    stoi = vocab
+    itos = {i: t for t, i in vocab.items()}
+
+    # Build embeddings dict
+    embeddings = {token: embedding_matrix[idx] for token, idx in vocab.items()}
 
     return embeddings, stoi, itos
