@@ -83,15 +83,27 @@ def load_text_corpus(dataset_name="wikitext2", tokenizer_mode="word", max_senten
         test_text = train_text[split_idx:]
         train_text = train_text[:split_idx]
 
-    elif dataset_name == "wikipedia":
-        dataset = load_dataset("wikipedia", "20220301.en")
-
-        train_text = dataset["train"]["text"]
-
-        # create artificial split
-        split_idx = int(0.95 * len(train_text))
-        test_text = train_text[split_idx:]
-        train_text = train_text[:split_idx]
+   elif dataset_name == "wikipedia":
+        dataset = load_dataset(
+            "wikimedia/wikipedia",
+            "20231101.en",
+            split="train",
+            streaming=True
+        )
+    
+        text_data = []
+        for i, example in enumerate(dataset):
+            text_data.append(example["text"])
+            if i >= 100000:   # control size
+                break
+    
+        split_idx = int(0.9 * len(text_data))
+    
+        train_text = text_data[:split_idx]
+        test_text = text_data[split_idx:]
+    
+        train_corpus = build_sentence_corpus(train_text)
+        test_corpus = build_sentence_corpus(test_text)
 
     else:
         raise ValueError("Unsupported dataset")
