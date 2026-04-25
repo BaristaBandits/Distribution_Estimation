@@ -5,6 +5,13 @@ from datasets import load_dataset
 from transformers import GPT2Tokenizer
 
 gpt2_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+from datasets.utils.logging import set_verbosity_error, disable_progress_bar
+
+# Hide all dataset logs
+set_verbosity_error()
+
+# Disable tqdm progress bars
+disable_progress_bar()
 
 def preprocess_sentence(sentence):
     sentence = sentence.lower()
