@@ -17,7 +17,7 @@ parser.add_argument(
     "--embeddings",
     type=str,
     default="glove",
-    choices=["glove", "word2vec"],
+    choices=["glove", "word2vec", "gpt2"],
     help="Embedding type"
 )
 
@@ -25,13 +25,20 @@ parser.add_argument(
     "--dataset",
     type=str,
     default="wikitext2",
-    choices=["wikitext2", "wikitext103"],
+    choices=["wikitext2", "wikitext103", "openwebtext", "wikipedia"],
     help="Dataset"
 )
 
-parser.add_argument("--run_add", action="store_true", help="Run Add-Constant")
-parser.add_argument("--run_jm", action="store_true", help="Run Jelinek-Mercer")
-parser.add_argument("--run_kn", action="store_true", help="Run Kneser-Ney")
+parser.add_argument(
+    "--max_sentences",
+    type=int,
+    default=None,
+    help="Limit dataset size (for speed)"
+)
+
+parser.add_argument("--run_add", action="store_true")
+parser.add_argument("--run_jm", action="store_true")
+parser.add_argument("--run_kn", action="store_true")
 
 args = parser.parse_args()
 
@@ -40,10 +47,24 @@ print(f"Using dataset: {args.dataset}")
 
 
 # =======================
+# TOKENIZER MODE (CRITICAL)
+# =======================
+if args.embeddings == "gpt2":
+    tokenizer_mode = "gpt2"
+else:
+    tokenizer_mode = "word"
+
+
+# =======================
 # LOAD DATA
 # =======================
 embeddings, stoi, itos = load_embeddings(args.embeddings)
-train_corpus, test_corpus = load_text_corpus(args.dataset)
+
+train_corpus, test_corpus = load_text_corpus(
+    args.dataset,
+    tokenizer_mode=tokenizer_mode,
+    max_sentences=args.max_sentences
+)
 
 
 # =======================
@@ -74,18 +95,16 @@ if args.run_add:
 
         print(f"c = {c:.4f} → Perplexity = {ppl:.4f}")
 
-    # Find best
     best_idx = np.argmin(perplexities)
     best_add = (add_constants[best_idx], perplexities[best_idx])
 
     print(f"\nBest Add-Constant: c = {best_add[0]:.4f}, PPL = {best_add[1]:.4f}")
 
-    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(add_constants, perplexities, marker='o')
     plt.xlabel("Add Constant")
     plt.ylabel("Perplexity")
-    plt.title(f"Add-Constant ({args.dataset})")
+    plt.title(f"Add-Constant ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
 
@@ -109,18 +128,16 @@ if args.run_jm:
 
         print(f"lambda = {lam:.2f} → Perplexity = {ppl:.4f}")
 
-    # Find best
     best_idx = np.argmin(jm_perplexities)
     best_jm = (lambdas[best_idx], jm_perplexities[best_idx])
 
     print(f"\nBest Lambda: {best_jm[0]:.2f}, PPL = {best_jm[1]:.4f}")
 
-    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(lambdas, jm_perplexities, marker='o')
     plt.xlabel("Lambda")
     plt.ylabel("Perplexity")
-    plt.title(f"Jelinek-Mercer ({args.dataset})")
+    plt.title(f"Jelinek-Mercer ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
 
@@ -145,18 +162,16 @@ if args.run_kn:
 
         print(f"discount = {d:.2f} → Perplexity = {ppl:.4f}")
 
-    # Find best
     best_idx = np.argmin(kn_perplexities)
     best_kn = (discounts[best_idx], kn_perplexities[best_idx])
 
     print(f"\nBest Discount: {best_kn[0]:.2f}, PPL = {best_kn[1]:.4f}")
 
-    # Plot
     plt.figure(figsize=(12, 5))
     plt.plot(discounts, kn_perplexities, marker='o')
     plt.xlabel("Discount")
     plt.ylabel("Perplexity")
-    plt.title(f"Kneser-Ney ({args.dataset})")
+    plt.title(f"Kneser-Ney ({args.dataset}, {args.embeddings})")
     plt.grid(True)
     plt.show()
 
