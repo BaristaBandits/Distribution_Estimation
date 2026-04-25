@@ -55,21 +55,57 @@ def build_sentence_corpus(text_list):
 
     return corpus
 
+
 def load_text_corpus(dataset_name="wikitext2"):
 
     # ------------------ LOAD DATA ------------------
     if dataset_name == "wikitext2":
         dataset = load_dataset("wikitext", "wikitext-2-raw-v1")
+
         train_text = dataset["train"]["text"]
         test_text = dataset["test"]["text"]
-        train_corpus = build_sentence_corpus(train_text)
-        test_corpus = build_sentence_corpus(test_text)
 
     elif dataset_name == "wikitext103":
         dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
+
         train_text = dataset["train"]["text"]
         test_text = dataset["test"]["text"]
-        train_corpus = build_sentence_corpus(train_text)[:100000]
-        test_corpus = build_sentence_corpus(test_text)
+
+    elif dataset_name == "openwebtext":
+        dataset = load_dataset("openwebtext")
+
+        train_text = dataset["train"]["text"]
+
+        # split manually (since no official test split)
+        split_idx = int(0.95 * len(train_text))
+        test_text = train_text[split_idx:]
+        train_text = train_text[:split_idx]
+
+    elif dataset_name == "wikipedia":
+        dataset = load_dataset("wikipedia", "20220301.en")
+
+        train_text = dataset["train"]["text"]
+
+        # create artificial split
+        split_idx = int(0.95 * len(train_text))
+        test_text = train_text[split_idx:]
+        train_text = train_text[:split_idx]
+
+    else:
+        raise ValueError("Unsupported dataset")
+
+    # ------------------ BUILD CORPUS ------------------
+    print("Tokenizing train corpus...")
+    train_corpus = build_sentence_corpus(train_text)
+
+    print("Tokenizing test corpus...")
+    test_corpus = build_sentence_corpus(test_text)
+
+    # ------------------ OPTIONAL LIMIT ------------------
+
+    train_corpus = train_corpus[:100000]
+    test_corpus = test_corpus[:10000]
+    print('train size :', len(train_corpus))
+    print('test size :', len(test_corpus))
 
     return train_corpus, test_corpus
