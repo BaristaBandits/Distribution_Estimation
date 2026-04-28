@@ -77,7 +77,7 @@ class AddConstantBigram:
 
 
 
-    def perplexity(self, tokenized_sentences, k_syn=0):
+    def perplexity(self, tokenized_sentences, k_syn=0, beta = 1.0):
 
       total_tokens = 0
       log_prob_sum = 0.0
@@ -95,7 +95,7 @@ class AddConstantBigram:
                   if k_syn == 0:
                       prob = self.prob(prev_word, word)
                   else:
-                      prob = self.semantic_prob(prev_word, word, k_syn)
+                      prob = self.semantic_prob(prev_word, word, k_syn, beta)
 
                   if prob <= 0:
                       prob = 1e-12
