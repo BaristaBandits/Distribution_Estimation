@@ -66,6 +66,7 @@ class AddConstantBigram:
 
       weighted_prob = math.exp(-beta * base_weight) * base_prob
       total_weight = math.exp(-beta * base_weight)
+      print([math.exp(-beta * w) for _, w in synonyms[:5]])
 
       for s, weight in synonyms:
           if s != prev_word:
