@@ -306,6 +306,9 @@ def build_cache(train_corpus, support, embeddings, k=50):
   print("Max L1 norm:", max_norm)
   print("Word with max norm:", max_word)
 
+  #fixing max_norm to be a constant 
+  max_norm = 5.0
+
   #==================Caching================
   words_ge = [w for w in vocab if n.get(w, 0) >= 10 and d.get(w, 0) >= 5 and w in embeddings]
   print(len(words_ge))
