@@ -84,104 +84,108 @@ d_estimate, synonym_cache = build_cache(
 # 1. SEMANTIC ADD-CONSTANT
 # =========================================================
 if args.run_add:
-    print("\nRunning Semantic Add-Constant Model...")
+    print("\nRunning Add-Constant β sweep...")
 
     model = AddConstantBigram(topk_cache=synonym_cache)
     model.fit(train_corpus)
 
-    add_consts = np.arange(0.0005, 0.0009, 0.0001)
-    k_values = [0, 10, 20, 30, 40, 50]
+    betas = np.logspace(-3, 1, 10)
+    k_values = [10, 30, 50]
 
-    results_add = {}
+    FIXED_C = 0.0005
+    model.add_constant = FIXED_C
 
-    for k in tqdm.tqdm(k_values, desc="k values"):
-        ppl_list = []
+    results_add_beta = {k: [] for k in k_values}
 
-        for c in tqdm.tqdm(add_consts, desc="add_const", leave=False):
-            model.add_constant = c
-            ppl = model.perplexity(test_corpus, k_syn=k, beta = args.beta)
-            ppl_list.append(ppl)
+    for beta in tqdm.tqdm(betas, desc="beta sweep"):
+        for k in k_values:
+            ppl = model.perplexity(
+                test_corpus,
+                k_syn=k,
+                beta=beta
+            )
+            results_add_beta[k].append(ppl)
 
-        results_add[k] = ppl_list
+    # =======================
+    # PLOT
+    # =======================
+    plt.figure(figsize=(10, 5))
 
-    # Plot
-    plt.figure(figsize=(12, 5))
     for k in k_values:
-        plt.plot(add_consts, results_add[k], marker='o', label=f"k={k}")
+        plt.plot(betas, results_add_beta[k], marker='o', label=f"k={k}")
 
-    plt.xlabel("Add Constant")
+    plt.xscale("log")
+    plt.xlabel("Beta (softmin temperature)")
     plt.ylabel("Perplexity")
-    plt.title(f"Semantic Add-Constant ({args.dataset}, {args.embeddings})")
+    plt.title(f"Add-Constant β Sweep ({args.dataset}, {args.embeddings})")
     plt.legend()
     plt.grid(True)
     plt.show()
 
-    # Best per k
-    print("\n===== BEST ADD-CONSTANT PER k =====")
+    # =======================
+    # BEST β
+    # =======================
+    print("\n===== BEST β (Add-Constant) =====")
 
     for k in k_values:
-        ppl_list = results_add[k]
+        ppl_list = results_add_beta[k]
         best_idx = np.argmin(ppl_list)
 
-        best_c = add_consts[best_idx]
-        best_ppl = ppl_list[best_idx]
-
-        print(f"k = {k:2d} → best c = {best_c:.6f}, PPL = {best_ppl:.4f}")
-
+        print(f"k={k} → best β={betas[best_idx]:.4f}, PPL={ppl_list[best_idx]:.2f}")
 
 # =========================================================
 # 2. SEMANTIC KNESER-NEY
 # =========================================================
 if args.run_kn:
-    print("\nRunning Semantic Kneser-Ney...")
+    print("\nRunning Kneser-Ney β sweep...")
 
-    discounts = np.arange(0.5, 0.95, 0.05)
-    k_values = [0, 5, 10, 20, 30, 50]
+    betas = np.logspace(-3, 1, 10)
+    k_values = [10, 30, 50]
 
-    # store correctly: {k: [ppl for each discount]}
-    results_kn = {k: [] for k in k_values}
+    FIXED_D = 0.85
 
-    for d in discounts:
-        print(f"\nTraining model with discount={d:.2f}")
+    model = SemanticBigramKneserNey(
+        discount=FIXED_D,
+        topk_cache=synonym_cache,
+        d_estimate=d_estimate
+    )
 
-        model = SemanticBigramKneserNey(
-            discount=d,
-            topk_cache=synonym_cache,
-            d_estimate=d_estimate
-        )
+    model.fit(train_corpus)
 
-        model.fit(train_corpus)
+    results_kn_beta = {k: [] for k in k_values}
 
+    for beta in tqdm.tqdm(betas, desc="beta sweep"):
         for k in k_values:
-            ppl = model.perplexity(test_corpus, k_syn=k, beta = args.beta)
-            print(f"  k={k} → PPL={ppl:.4f}")
-            results_kn[k].append(ppl)
+            ppl = model.perplexity(
+                test_corpus,
+                k_syn=k,
+                beta=beta
+            )
+            results_kn_beta[k].append(ppl)
 
     # =======================
-    # PLOT: PPL vs DISCOUNT
+    # PLOT
     # =======================
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(10, 5))
 
     for k in k_values:
-        plt.plot(discounts, results_kn[k], marker='o', label=f"k={k}")
+        plt.plot(betas, results_kn_beta[k], marker='o', label=f"k={k}")
 
-    plt.xlabel("Discount")
+    plt.xscale("log")
+    plt.xlabel("Beta (softmin temperature)")
     plt.ylabel("Perplexity")
-    plt.title(f"Semantic Kneser-Ney ({args.dataset}, {args.embeddings})")
+    plt.title(f"Kneser-Ney β Sweep ({args.dataset}, {args.embeddings})")
     plt.legend()
     plt.grid(True)
     plt.show()
 
     # =======================
-    # BEST DISCOUNT PER k
+    # BEST β
     # =======================
-    print("\n===== BEST DISCOUNT PER k (Semantic KN) =====")
+    print("\n===== BEST β (KN) =====")
 
     for k in k_values:
-        ppl_list = results_kn[k]
+        ppl_list = results_kn_beta[k]
         best_idx = np.argmin(ppl_list)
 
-        best_d = discounts[best_idx]
-        best_ppl = ppl_list[best_idx]
-
-        print(f"k = {k:2d} → best discount = {best_d:.2f}, PPL = {best_ppl:.4f}")
+        print(f"k={k} → best β={betas[best_idx]:.4f}, PPL={ppl_list[best_idx]:.2f}")
