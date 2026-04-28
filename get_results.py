@@ -44,7 +44,7 @@ def construct_properties_dict(names, labels):
 # ARGUMENTS
 # =======================
 parser = argparse.ArgumentParser()
-parser.add_argument("--max_sentences", type=int, default=None)
+parser.add_argument("--max_sentences", type=int, default=100000)
 parser.add_argument("--beta", type=float, default=1.0)
 parser.add_argument("--k_cache", type=int, default=50)
 
