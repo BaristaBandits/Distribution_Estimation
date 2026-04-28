@@ -126,26 +126,9 @@ for emb_name in emb_list:
 
 
 # =======================
-# PLOT: TWO SUBPLOTS
+# PLOT 1: ADD-CONSTANT
 # =======================
-names = [
-    "w2v_add", "gpt2_add",
-    "w2v_kn", "gpt2_kn"
-]
-
-labels = [
-    "Word2Vec", "GPT-2",
-    "Word2Vec", "GPT-2"
-]
-
-prop = construct_properties_dict(names, labels)
-
-fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
-
-# =======================
-# LEFT: ADD-CONSTANT
-# =======================
-ax = axes[0]
+plt.figure(figsize=(7, 5))
 
 add_map = {
     "w2v_add": results["add"]["word2vec"],
@@ -153,7 +136,7 @@ add_map = {
 }
 
 for key in ["w2v_add", "gpt2_add"]:
-    ax.plot(
+    plt.plot(
         k_values,
         add_map[key],
         color=prop[key]['color'],
@@ -162,17 +145,21 @@ for key in ["w2v_add", "gpt2_add"]:
         label=prop[key]['label']
     )
 
-ax.set_title("Add-Constant (c = 0.0005)")
-ax.set_xlabel("Number of Synonyms (k)")
-ax.set_ylabel("Perplexity")
-ax.grid(True)
-ax.legend()
+plt.title("Add-Constant (c = 0.0005)")
+plt.xlabel("Number of Synonyms (k)")
+plt.ylabel("Perplexity")
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.savefig('add_constant_plot.png')
+plt.show()
 
 
 # =======================
-# RIGHT: KN
+# PLOT 2: KN
 # =======================
-ax = axes[1]
+plt.figure(figsize=(7, 5))
 
 kn_map = {
     "w2v_kn": results["kn"]["word2vec"],
@@ -180,7 +167,7 @@ kn_map = {
 }
 
 for key in ["w2v_kn", "gpt2_kn"]:
-    ax.plot(
+    plt.plot(
         k_values,
         kn_map[key],
         color=prop[key]['color'],
@@ -189,19 +176,16 @@ for key in ["w2v_kn", "gpt2_kn"]:
         label=prop[key]['label']
     )
 
-ax.set_title("Kneser-Ney (d = 0.85)")
-ax.set_xlabel("Number of Synonyms (k)")
-ax.grid(True)
-ax.legend()
+plt.title("Kneser-Ney (d = 0.85)")
+plt.xlabel("Number of Synonyms (k)")
+plt.ylabel("Perplexity")
+plt.grid(True)
+plt.legend()
 
-
-# =======================
-# FINAL TOUCHES
-# =======================
-plt.suptitle("Perplexity vs k (WikiText103)", fontsize=14)
 plt.tight_layout()
-plt.savefig('Plots.png')
+plt.savefig('kn_plot.png')
 plt.show()
+
 
 
 
