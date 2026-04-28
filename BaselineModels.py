@@ -165,7 +165,7 @@ class BigramKneserNeyNaive:
     # =======================
     # SEMANTIC PROBABILITY
     # =======================
-    def semantic_prob(self, prev_word, word, k_syn=5):
+    def semantic_prob(self, prev_word, word, k_syn=5, beta = 1):
 
         synonyms = self.topk_cache.get(prev_word, [])[:k_syn]
         if not synonyms:
@@ -184,14 +184,14 @@ class BigramKneserNeyNaive:
         else:
             base_weight = 0.0
 
-        weighted_prob = base_weight * base_prob
-        total_weight = base_weight
+        weighted_prob = math.exp(- beta * base_weight) * base_prob
+        total_weight = math.exp(- beta * base_weight)
 
         for s, weight in synonyms:
             if s != prev_word:
                 prob = self.prob(s, word)
-                weighted_prob += weight * prob
-                total_weight += weight
+                weighted_prob += math.exp(- beta * weight) * prob
+                total_weight += math.exp(- beta * weight)
 
         if total_weight == 0:
             return base_prob
