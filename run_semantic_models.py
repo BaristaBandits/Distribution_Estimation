@@ -1,3 +1,6 @@
+# =======================
+# IMPORTS
+# =======================
 import numpy as np
 import matplotlib.pyplot as plt
 import tqdm
@@ -31,7 +34,6 @@ parser.add_argument(
 
 parser.add_argument("--k_cache", type=int, default=50)
 parser.add_argument("--max_sentences", type=int, default=100000)
-parser.add_argument("--beta", type=float, default=1.0)
 parser.add_argument("--run_add", action="store_true")
 parser.add_argument("--run_kn", action="store_true")
 
@@ -89,33 +91,38 @@ if args.run_add:
     model = AddConstantBigram(topk_cache=synonym_cache)
     model.fit(train_corpus)
 
-    betas = np.logspace(-3, 1, 10)
-    k_values = [10, 30, 50]
+    betas = list(range(1, 11))   # β = 1,...,10
+    k_values = [0, 10, 30, 50]   # include baseline
 
     FIXED_C = 0.0005
     model.add_constant = FIXED_C
 
     results_add_beta = {k: [] for k in k_values}
 
-    for beta in tqdm.tqdm(betas, desc="beta sweep"):
+    print("\n===== ADD-CONSTANT RESULTS =====")
+
+    for beta in betas:
+        print(f"\n--- β = {beta} ---")
+
         for k in k_values:
             ppl = model.perplexity(
                 test_corpus,
                 k_syn=k,
                 beta=beta
             )
+
             results_add_beta[k].append(ppl)
+            print(f"k = {k:2d} → PPL = {ppl:.2f}")
 
     # =======================
     # PLOT
     # =======================
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(8, 5))
 
     for k in k_values:
         plt.plot(betas, results_add_beta[k], marker='o', label=f"k={k}")
 
-    plt.xscale("log")
-    plt.xlabel("Beta (softmin temperature)")
+    plt.xlabel("Beta")
     plt.ylabel("Perplexity")
     plt.title(f"Add-Constant β Sweep ({args.dataset}, {args.embeddings})")
     plt.legend()
@@ -131,7 +138,8 @@ if args.run_add:
         ppl_list = results_add_beta[k]
         best_idx = np.argmin(ppl_list)
 
-        print(f"k={k} → best β={betas[best_idx]:.4f}, PPL={ppl_list[best_idx]:.2f}")
+        print(f"k={k} → best β={betas[best_idx]}, PPL={ppl_list[best_idx]:.2f}")
+
 
 # =========================================================
 # 2. SEMANTIC KNESER-NEY
@@ -139,8 +147,8 @@ if args.run_add:
 if args.run_kn:
     print("\nRunning Kneser-Ney β sweep...")
 
-    betas = np.logspace(-3, 1, 10)
-    k_values = [10, 30, 50]
+    betas = list(range(1, 11))
+    k_values = [0, 10, 30, 50]
 
     FIXED_D = 0.85
 
@@ -154,25 +162,30 @@ if args.run_kn:
 
     results_kn_beta = {k: [] for k in k_values}
 
-    for beta in tqdm.tqdm(betas, desc="beta sweep"):
+    print("\n===== KN RESULTS =====")
+
+    for beta in betas:
+        print(f"\n--- β = {beta} ---")
+
         for k in k_values:
             ppl = model.perplexity(
                 test_corpus,
                 k_syn=k,
                 beta=beta
             )
+
             results_kn_beta[k].append(ppl)
+            print(f"k = {k:2d} → PPL = {ppl:.2f}")
 
     # =======================
     # PLOT
     # =======================
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(8, 5))
 
     for k in k_values:
         plt.plot(betas, results_kn_beta[k], marker='o', label=f"k={k}")
 
-    plt.xscale("log")
-    plt.xlabel("Beta (softmin temperature)")
+    plt.xlabel("Beta")
     plt.ylabel("Perplexity")
     plt.title(f"Kneser-Ney β Sweep ({args.dataset}, {args.embeddings})")
     plt.legend()
@@ -188,4 +201,4 @@ if args.run_kn:
         ppl_list = results_kn_beta[k]
         best_idx = np.argmin(ppl_list)
 
-        print(f"k={k} → best β={betas[best_idx]:.4f}, PPL={ppl_list[best_idx]:.2f}")
+        print(f"k={k} → best β={betas[best_idx]}, PPL={ppl_list[best_idx]:.2f}")
