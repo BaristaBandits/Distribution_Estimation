@@ -13,7 +13,7 @@ from SemanticKN import SemanticBigramKneserNey
 # =======================
 # STYLE (IEEE)
 # =======================
-plt.style.use("IEEEstyle.mplstyle")
+plt.style.use("./IEEEstyle.mplstyle")
 
 
 def construct_properties_dict(names, labels):
