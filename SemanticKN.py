@@ -149,7 +149,7 @@ class SemanticBigramKneserNey:
     # =======================
     # LOG PROB
     # =======================
-    def sentence_log_prob(self, sent, k_syn=5):
+    def sentence_log_prob(self, sent, k_syn=5, beta = 1):
         log_prob = 0.0
 
         #Empirical Normalization
@@ -158,7 +158,7 @@ class SemanticBigramKneserNey:
             if k_syn == 0:
                 p = self.prob(sent[i - 1], sent[i])   #baseline KN
             else:
-                p = self.semantic_prob(sent[i - 1], sent[i], k_syn)
+                p = self.semantic_prob(sent[i - 1], sent[i], k_syn, beta)
                 p /= GLOBAL_Z 
             log_prob += math.log2(p)
 
@@ -167,7 +167,7 @@ class SemanticBigramKneserNey:
     # =======================
     # PERPLEXITY
     # =======================
-    def perplexity(self, tokenized_sentences, k_syn=5):
+    def perplexity(self, tokenized_sentences, k_syn=5, beta = 1):
         total_log_prob = 0.0
         total_tokens = 0
 
@@ -175,7 +175,7 @@ class SemanticBigramKneserNey:
             if len(sent) < 2:
                 continue
 
-            total_log_prob += self.sentence_log_prob(sent, k_syn)
+            total_log_prob += self.sentence_log_prob(sent, k_syn, beta)
             total_tokens += (len(sent) - 1)
 
         return 2 ** (-total_log_prob / total_tokens)
