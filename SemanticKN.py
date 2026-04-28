@@ -86,60 +86,60 @@ class SemanticBigramKneserNey:
         syns = self.topk_cache.get(word, [])
         return syns[:k] if syns else []
 
-    def semantic_first_term(self, history, word, k_syn):
+    def semantic_first_term(self, history, word, k_syn, beta ):
         synonyms = self.get_synonyms(history, k_syn)
         # include base history itself
         base = self.first_term(history, word)
         baseweight = self.base_weight(history)
-        total = base * baseweight
-        total_weight =baseweight
+        total = math.exp(- beta * baseweight) * base
+        total_weight =  math.exp(- beta * baseweight)
 
         for s, weight in synonyms:
             val = self.first_term(s, word)
-            total += weight * val
-            total_weight += weight
+            total += math.exp ( -beta * weight) * val
+            total_weight += math.exp( - beta * weight)
 
         return total / total_weight if total_weight > 0 else 0.0
 
-    def semantic_lambda(self, history, k_syn):
+    def semantic_lambda(self, history, k_syn, beta ):
         synonyms = self.get_synonyms(history, k_syn)
 
         # include base history itself
         base = self.lambda_term(history)
         baseweight = self.base_weight(history)
-        total = base * baseweight
-        total_weight =baseweight
+        total = base * math.exp ( - beta * baseweight)
+        total_weight = math.exp ( - beta * baseweight)
 
         for s, weight in synonyms:
             lam = self.lambda_term(s)
-            total += weight * lam
-            total_weight += weight
+            total += math.exp ( - beta * weight) * lam
+            total_weight += math.exp ( - beta * weight)
 
         return total / total_weight if total_weight > 0 else 0.0
 
-    def semantic_continuation(self, word, k_syn):
+    def semantic_continuation(self, word, k_syn, beta ):
         synonyms = self.get_synonyms(word, k_syn)
         
         # include base history itself
         base = self.continuation_prob(word)
         baseweight = self.base_weight(word)
-        total = base * baseweight
-        total_weight =baseweight
+        total = base * math.exp ( - beta * baseweight)
+        total_weight = math.exp ( - beta * baseweight)
 
         for u, weight in synonyms:
             p = self.continuation_prob(u)
-            total += weight * p
-            total_weight += weight
+            total += math.exp ( - beta * weight) * p
+            total_weight += math.exp ( - beta * weight)
 
         return total / total_weight if total_weight > 0 else 1.0 / max(len(self.vocab), 1)
 
     # =======================
     # FINAL PROBABILITY
     # =======================
-    def semantic_prob(self, history, word, k_syn=5):
-        first = self.semantic_first_term(history, word, k_syn)
-        lam = self.semantic_lambda(history, k_syn)
-        p_cont = self.semantic_continuation(word, k_syn)
+    def semantic_prob(self, history, word, k_syn=5, beta = 1):
+        first = self.semantic_first_term(history, word, k_syn, beta)
+        lam = self.semantic_lambda(history, k_syn, beta)
+        p_cont = self.semantic_continuation(word, k_syn, beta)
 
         prob = first + lam * p_cont
         if prob <= 0:
