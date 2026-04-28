@@ -1,0 +1,45 @@
+xtick.direction : in
+xtick.major.size : 3
+xtick.major.width : 0.5
+xtick.minor.size : 1.5
+xtick.minor.width : 0.5
+xtick.minor.visible : True
+xtick.labelsize: 10
+xtick.top : True
+
+
+ytick.direction : in
+ytick.major.size : 3
+ytick.major.width : 0.5
+ytick.minor.size : 1.5
+ytick.minor.width : 0.5
+ytick.minor.visible : True
+ytick.right : True
+ytick.labelsize: 10
+
+
+axes.linewidth : 1.0
+grid.linewidth : 0.5
+lines.linewidth : 1
+lines.markersize: 5
+
+legend.frameon : False
+legend.fontsize: medium
+
+
+savefig.bbox : tight
+savefig.pad_inches : 0.05
+savefig.format: pdf
+
+text.usetex : True
+text.latex.preamble : \usepackage{amsmath} \usepackage{amssymb} \usepackage{times}
+
+figure.figsize : 3.5, 2.5
+figure.dpi : 600
+
+font.size : 8
+font.serif : Times New Roman
+pgf.rcfonts: False
+
+
+pgf.texsystem : xelatex
