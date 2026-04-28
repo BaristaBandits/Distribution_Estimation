@@ -60,7 +60,7 @@ class AddConstantBigram:
 
       if base_prob > 0:
           d_est = self.d_estimate[prev_word]   # no safety check (same as old)
-          base_weight = 1 / (d_est / (2 * n))
+          base_weight = d_est / (2 * n)
       else:
           base_weight = 0
 
