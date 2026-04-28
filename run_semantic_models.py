@@ -99,7 +99,7 @@ if args.run_add:
 
         for c in tqdm.tqdm(add_consts, desc="add_const", leave=False):
             model.add_constant = c
-            ppl = model.perplexity(test_corpus, k_syn=k)
+            ppl = model.perplexity(test_corpus, k_syn=k, beta = args.beta)
             ppl_list.append(ppl)
 
         results_add[k] = ppl_list
@@ -153,7 +153,7 @@ if args.run_kn:
         model.fit(train_corpus)
 
         for k in k_values:
-            ppl = model.perplexity(test_corpus, k_syn=k)
+            ppl = model.perplexity(test_corpus, k_syn=k, beta = args.beta)
             print(f"  k={k} → PPL={ppl:.4f}")
             results_kn[k].append(ppl)
 
