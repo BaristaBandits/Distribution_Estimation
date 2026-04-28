@@ -194,6 +194,7 @@ ax.legend()
 # =======================
 plt.suptitle("Perplexity vs k (WikiText103)", fontsize=14)
 plt.tight_layout()
+plt.savefig('Plots.png')
 plt.show()
 
 
