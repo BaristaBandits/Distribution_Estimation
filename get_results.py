@@ -1,7 +1,14 @@
+# =======================
+# FORCE PGF BACKEND
+# =======================
+import matplotlib
+matplotlib.use("pgf")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import tqdm
 import argparse
+import os
 
 from load_embed import load_embeddings
 from load_dataset import load_text_corpus
@@ -13,15 +20,14 @@ from SemanticKN import SemanticBigramKneserNey
 # =======================
 # STYLE (IEEE)
 # =======================
-import os
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 style_path = os.path.join(BASE_DIR, "IEEEstyle.mplstyle")
-
 plt.style.use(style_path)
 
 
-
+# =======================
+# LINE STYLES
+# =======================
 def construct_properties_dict(names, labels):
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted', 'solid', 'solid']
     colors = ['blue', 'brown', 'purple', 'darkorange', 'green', 'red']
@@ -126,9 +132,18 @@ for emb_name in emb_list:
 
 
 # =======================
+# PLOT STYLES
+# =======================
+names = ["w2v_add", "gpt2_add", "w2v_kn", "gpt2_kn"]
+labels = ["Word2Vec + Add", "GPT2 + Add", "Word2Vec + KN", "GPT2 + KN"]
+
+prop = construct_properties_dict(names, labels)
+
+
+# =======================
 # PLOT 1: ADD-CONSTANT
 # =======================
-plt.figure(figsize=(7, 5))
+plt.figure()
 
 add_map = {
     "w2v_add": results["add"]["word2vec"],
@@ -152,14 +167,17 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig('add_constant_plot.png')
-plt.show()
+
+plt.savefig("add_constant_plot.pgf")
+plt.savefig("add_constant_plot.pdf")
+
+plt.close()
 
 
 # =======================
 # PLOT 2: KN
 # =======================
-plt.figure(figsize=(7, 5))
+plt.figure()
 
 kn_map = {
     "w2v_kn": results["kn"]["word2vec"],
@@ -183,10 +201,11 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig('kn_plot.png')
-plt.show()
 
+plt.savefig("kn_plot.pgf")
+plt.savefig("kn_plot.pdf")
 
+plt.close()
 
 
 # =======================
