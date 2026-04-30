@@ -91,13 +91,13 @@ class SemanticBigramKneserNey:
         # include base history itself
         base = self.first_term(history, word)
         baseweight = self.base_weight(history)
-        total = math.exp(- beta * baseweight) * base
-        total_weight =  math.exp(- beta * baseweight)
+        total =  baseweight * base
+        total_weight =  baseweight
 
         for s, weight in synonyms:
             val = self.first_term(s, word)
-            total += math.exp ( -beta * weight) * val
-            total_weight += math.exp( - beta * weight)
+            total +=  weight * val
+            total_weight +=  weight
 
         return total / total_weight if total_weight > 0 else 0.0
 
@@ -107,14 +107,13 @@ class SemanticBigramKneserNey:
         # include base history itself
         base = self.lambda_term(history)
         baseweight = self.base_weight(history)
-        total = base * math.exp ( - beta * baseweight)
-        total_weight = math.exp ( - beta * baseweight)
+        total = base * basweight
+        total_weight = baseweught
 
         for s, weight in synonyms:
             lam = self.lambda_term(s)
-            total += math.exp ( - beta * weight) * lam
-            total_weight += math.exp ( - beta * weight)
-
+            total += weight  * lam
+            total_weight += weight
         return total / total_weight if total_weight > 0 else 0.0
 
     def semantic_continuation(self, word, k_syn, beta ):
@@ -123,13 +122,12 @@ class SemanticBigramKneserNey:
         # include base history itself
         base = self.continuation_prob(word)
         baseweight = self.base_weight(word)
-        total = base * math.exp ( - beta * baseweight)
-        total_weight = math.exp ( - beta * baseweight)
-
+        total = base * baseweight
+        total_weight = basweight
         for u, weight in synonyms:
             p = self.continuation_prob(u)
-            total += math.exp ( - beta * weight) * p
-            total_weight += math.exp ( - beta * weight)
+            total += weight * p
+            total_weight += weight 
 
         return total / total_weight if total_weight > 0 else 1.0 / max(len(self.vocab), 1)
 
