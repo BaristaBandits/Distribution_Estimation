@@ -107,8 +107,8 @@ class SemanticBigramKneserNey:
         # include base history itself
         base = self.lambda_term(history)
         baseweight = self.base_weight(history)
-        total = base * basweight
-        total_weight = baseweught
+        total = base * baseweight
+        total_weight = baseweight
 
         for s, weight in synonyms:
             lam = self.lambda_term(s)
@@ -123,7 +123,7 @@ class SemanticBigramKneserNey:
         base = self.continuation_prob(word)
         baseweight = self.base_weight(word)
         total = base * baseweight
-        total_weight = basweight
+        total_weight = baseweight
         for u, weight in synonyms:
             p = self.continuation_prob(u)
             total += weight * p
