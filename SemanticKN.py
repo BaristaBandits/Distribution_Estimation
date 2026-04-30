@@ -41,7 +41,7 @@ class SemanticBigramKneserNey:
       n = self.unigram_counts.get(word, 0)
       if word in self.d_estimate:
         d = self.d_estimate[word]
-        return d / ( 2 * n )
+        return 1/ (d / ( 2 * n ))
       else:
         return 1
 
