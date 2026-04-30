@@ -66,7 +66,7 @@ args = parser.parse_args()
 k_values = [0, 5, 10, 20, 30, 40, 50]
 emb_list = ["glove", "word2vec", "gpt2"]
 
-ADD_CONST_LIST = [0.001, 0.005, 0.007]
+ADD_CONST_LIST =  [0.0002, 0.0003, 0.0004]
 KN_DISCOUNT_LIST = [0.6, 0.7, 0.8]
 
 
