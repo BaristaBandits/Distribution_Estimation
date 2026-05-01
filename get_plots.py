@@ -19,33 +19,17 @@ from SemanticKN import SemanticBigramKneserNey
 
 
 # =======================
-# HIGH-QUALITY PLOT SETTINGS
-# =======================
-plt.rcParams.update({
-    "figure.dpi": 300,
-    "savefig.dpi": 300,
-    "font.size": 12,
-    "axes.titlesize": 14,
-    "axes.labelsize": 13,
-    "legend.fontsize": 11,
-    "lines.linewidth": 2,
-    "lines.markersize": 6,
-})
-
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    "text.usetex": True,
-    "pgf.rcfonts": False,
-})
-
-
-# =======================
-# STYLE (IEEE)
+# STYLE (IEEE ONLY SOURCE)
 # =======================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 style_path = os.path.join(BASE_DIR, "IEEEstyle.mplstyle")
+
 plt.style.use(style_path)
 
+
+# =======================
+# CACHE DIR
+# =======================
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -54,16 +38,23 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # LINE STYLE FUNCTION
 # =======================
 def construct_properties_dict(names, labels):
-    linestyles = ['solid', 'dashed', 'dashdot', 'dotted', 'solid', 'solid']
     colors = ['blue', 'brown', 'purple', 'darkorange', 'green', 'red']
     markers = ['o', '^', 's', 'P', 'X', '*']
 
     properties_dict = {}
 
     for i, name in enumerate(names):
+        # Uniform style per embedding
+        if "glove" in name:
+            linestyle = "solid"
+        elif "word2vec" in name:
+            linestyle = "dashed"
+        else:
+            linestyle = "dashdot"
+
         properties_dict[name] = {
             'color': colors[i % len(colors)],
-            'linestyle': linestyles[i % len(linestyles)],
+            'linestyle': linestyle,
             'marker': markers[i % len(markers)],
             'label': labels[i]
         }
@@ -88,7 +79,7 @@ args = parser.parse_args()
 # =======================
 # SETTINGS
 # =======================
-m_values = [0, 5, 10, 20, 30, 40, 50]   # renamed conceptually
+m_values = [0, 5, 10, 20, 30, 40, 50]
 emb_list = ["glove", "word2vec", "gpt2"]
 
 ADD_CONST_LIST = args.add_consts
@@ -159,9 +150,7 @@ for emb_name in emb_list:
         embeddings
     )
 
-    # =======================
-    # ADD-CONSTANT
-    # =======================
+    # -------- ADD-CONSTANT --------
     print("Evaluating Additive Smoothing...")
 
     for c in ADD_CONST_LIST:
@@ -179,9 +168,7 @@ for emb_name in emb_list:
             ppl = model.perplexity(test_corpus, k_syn=m)
             results["add"][emb_name][c].append(ppl)
 
-    # =======================
-    # KNESER-NEY
-    # =======================
+    # -------- KNESER-NEY --------
     print("Evaluating Kneser-Ney...")
 
     for d in KN_DISCOUNT_LIST:
@@ -204,16 +191,21 @@ for emb_name in emb_list:
 # PLOTTING
 # =======================
 
-# -------- ADD --------
-for emb in emb_list:
-    plt.figure(figsize=(6, 4))
+# -------- ADD (GLOVE + WORD2VEC) --------
+plt.figure()
 
-    names = [f"add_{c}" for c in ADD_CONST_LIST]
-    labels = [f"Add = {c}" for c in ADD_CONST_LIST]
-    props_dict = construct_properties_dict(names, labels)
-
+names, labels = [], []
+for emb in ["glove", "word2vec"]:
     for c in ADD_CONST_LIST:
-        props = props_dict[f"add_{c}"]
+        names.append(f"{emb}_add_{c}")
+        labels.append(f"{emb}, c={c}")
+
+props_dict = construct_properties_dict(names, labels)
+
+for emb in ["glove", "word2vec"]:
+    for c in ADD_CONST_LIST:
+        key = f"{emb}_add_{c}"
+        props = props_dict[key]
 
         plt.plot(
             m_values,
@@ -224,28 +216,32 @@ for emb in emb_list:
             label=props["label"]
         )
 
-    plt.title(f"{emb.upper()} - Additive Smoothing")
-    plt.xlabel("Number of Synonyms (m)")
-    plt.ylabel("Perplexity")
-    plt.grid(True, linestyle="--", alpha=0.6)
-    plt.legend()
+plt.xlabel("Number of Synonyms (m)")
+plt.ylabel("Perplexity")
+plt.grid(True)
+plt.legend(ncol=2)
 
-    plt.tight_layout(pad=0.5)
-    plt.savefig(f"{emb}_add_constants.pgf")
-    plt.savefig(f"{emb}_add_constants.pdf")
-    plt.close()
+plt.tight_layout()
+plt.savefig("combined_add_constants.pgf")
+plt.savefig("combined_add_constants.pdf")
+plt.close()
 
 
-# -------- KN --------
-for emb in emb_list:
-    plt.figure(figsize=(6, 4))
+# -------- KN (GLOVE + WORD2VEC) --------
+plt.figure()
 
-    names = [f"kn_{d}" for d in KN_DISCOUNT_LIST]
-    labels = [f"Discount = {d}" for d in KN_DISCOUNT_LIST]
-    props_dict = construct_properties_dict(names, labels)
-
+names, labels = [], []
+for emb in ["glove", "word2vec"]:
     for d in KN_DISCOUNT_LIST:
-        props = props_dict[f"kn_{d}"]
+        names.append(f"{emb}_kn_{d}")
+        labels.append(f"{emb}, d={d}")
+
+props_dict = construct_properties_dict(names, labels)
+
+for emb in ["glove", "word2vec"]:
+    for d in KN_DISCOUNT_LIST:
+        key = f"{emb}_kn_{d}"
+        props = props_dict[key]
 
         plt.plot(
             m_values,
@@ -256,16 +252,15 @@ for emb in emb_list:
             label=props["label"]
         )
 
-    plt.title(f"{emb.upper()} - Kneser-Ney")
-    plt.xlabel("Number of Synonyms (m)")
-    plt.ylabel("Perplexity")
-    plt.grid(True, linestyle="--", alpha=0.6)
-    plt.legend()
+plt.xlabel("Number of Synonyms (m)")
+plt.ylabel("Perplexity")
+plt.grid(True)
+plt.legend(ncol=2)
 
-    plt.tight_layout(pad=0.5)
-    plt.savefig(f"{emb}_kn_discounts.pgf")
-    plt.savefig(f"{emb}_kn_discounts.pdf")
-    plt.close()
+plt.tight_layout()
+plt.savefig("combined_kn_discounts.pgf")
+plt.savefig("combined_kn_discounts.pdf")
+plt.close()
 
 
 # =======================
@@ -305,7 +300,4 @@ for emb in emb_list:
         print(row)
 
 
-# =======================
-# DONE
-# =======================
 print("\nAll experiments complete.")
