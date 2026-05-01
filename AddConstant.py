@@ -46,7 +46,7 @@ class AddConstantBigram:
 
         return max(numerator / denominator, 1e-12)
 
-    def semantic_prob(self, prev_word, word, k_syn=5, beta = 1):
+    def semantic_prob(self, prev_word, word, k_syn=5):
 
       base_prob = self.prob(prev_word, word)
 
@@ -60,25 +60,24 @@ class AddConstantBigram:
 
       if base_prob > 0:
           d_est = self.d_estimate[prev_word]   # no safety check (same as old)
-          base_weight = 1/ (d_est / (2 * n))
+          base_weight = 1 / (d_est / (2 * n))
       else:
           base_weight = 0
 
-      weighted_prob =  base_weight * base_prob
-      total_weight =  base_weight
-      #print([math.exp(-beta * w) for _, w in synonyms[:5]])
+      weighted_prob = base_weight * base_prob
+      total_weight = base_weight
 
       for s, weight in synonyms:
           if s != prev_word:
               prob = self.prob(s, word)
-              weighted_prob +=  weight * prob
+              weighted_prob += weight * prob
               total_weight += weight
 
       return weighted_prob / total_weight
 
 
 
-    def perplexity(self, tokenized_sentences, k_syn=0, beta = 1.0):
+    def perplexity(self, tokenized_sentences, k_syn=0):
 
       total_tokens = 0
       log_prob_sum = 0.0
@@ -96,7 +95,7 @@ class AddConstantBigram:
                   if k_syn == 0:
                       prob = self.prob(prev_word, word)
                   else:
-                      prob = self.semantic_prob(prev_word, word, k_syn, beta)
+                      prob = self.semantic_prob(prev_word, word, k_syn)
 
                   if prob <= 0:
                       prob = 1e-12
@@ -127,4 +126,3 @@ class AddConstantBigram:
                 d_over_n[word] = 0.0
 
         return d_over_n
-
