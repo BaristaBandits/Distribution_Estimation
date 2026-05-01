@@ -144,12 +144,13 @@ for emb_name in emb_list:
     for c in ADD_CONST_LIST:
         print(f"  c = {c}")
 
-        add_model = AddConstantBigram(topk_cache=synonym_cache)
+        add_model = AddConstantBigram(topk_cache=synonym_cache, 
+        d_estimate=d_estimate)
         add_model.fit(train_corpus)
         add_model.add_constant = c
 
         for k in tqdm.tqdm(k_values):
-            ppl = add_model.perplexity(test_corpus, k_syn=k, beta=args.beta)
+            ppl = add_model.perplexity(test_corpus, k_syn=k)
             results["add"][emb_name][c].append(ppl)
 
     # =======================
