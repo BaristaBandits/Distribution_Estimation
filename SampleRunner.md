@@ -1,14 +1,14 @@
-#Clone the repository
+# Clone the repository
 ```python
 !git clone https://github.com/BaristaBandits/Distribution_Estimation.git
 ```
 
-#Install the required packages
+# Install the required packages
 ```python
 !pip install -r Distribution_Estimation/requirements.txt
 ```
 
-#Install the following for plotting in IEEEstle.mplstyle
+# Install the following for plotting in IEEEstle.mplstyle
 ```bash
 %%bash
 sudo apt-get update
@@ -16,7 +16,7 @@ sudo apt-get install -y texlive-xetex texlive-latex-extra texlive-fonts-recommen
 sudo apt-get install -y fonts-freefont-ttf
 ```
 
-#Run to get results
+# Run to get results
 
 ```python
 !python3 Distribution_Estimation/get_plots.py --add_consts 0.003 0.005 0.007 --discounts 0.5 0.6 0.7
