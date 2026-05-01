@@ -57,7 +57,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--max_sentences", type=int, default=100000)
 parser.add_argument("--beta", type=float, default=1.0)
 parser.add_argument("--k_cache", type=int, default=50)
-args = parser.parse_args()
+
 
 
 # =======================
@@ -66,10 +66,12 @@ args = parser.parse_args()
 k_values = [0, 5, 10, 20, 30, 40, 50]
 emb_list = ["glove", "word2vec", "gpt2"]
 
-ADD_CONST_LIST =  [0.0002, 0.0003, 0.0004]
-KN_DISCOUNT_LIST = [0.6, 0.7, 0.8]
+parser.add_argument("--add_consts", nargs="+", type=float, default=[0.001, 0.005, 0.007])
+parser.add_argument("--discounts", nargs="+", type=float, default=[0.6, 0.7, 0.8])
+args = parser.parse_args()
 
-
+ADD_CONST_LIST = args.add_consts
+KN_DISCOUNT_LIST=args.discounts
 # =======================
 # RESULTS STORAGE
 # =======================
