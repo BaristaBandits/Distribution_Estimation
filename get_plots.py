@@ -51,6 +51,27 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 # =======================
+# LINE STYLE FUNCTION
+# =======================
+def construct_properties_dict(names, labels):
+    linestyles = ['solid', 'dashed', 'dashdot', 'dotted', 'solid', 'solid']
+    colors = ['blue', 'brown', 'purple', 'darkorange', 'green', 'red']
+    markers = ['o', '^', 's', 'P', 'X', '*']
+
+    properties_dict = {}
+
+    for i, name in enumerate(names):
+        properties_dict[name] = {
+            'color': colors[i % len(colors)],
+            'linestyle': linestyles[i % len(linestyles)],
+            'marker': markers[i % len(markers)],
+            'label': labels[i]
+        }
+
+    return properties_dict
+
+
+# =======================
 # ARGUMENTS
 # =======================
 parser = argparse.ArgumentParser()
@@ -58,20 +79,22 @@ parser.add_argument("--max_sentences", type=int, default=100000)
 parser.add_argument("--beta", type=float, default=1.0)
 parser.add_argument("--k_cache", type=int, default=50)
 
+parser.add_argument("--add_consts", nargs="+", type=float, default=[0.001, 0.005, 0.007])
+parser.add_argument("--discounts", nargs="+", type=float, default=[0.6, 0.7, 0.8])
+
+args = parser.parse_args()
 
 
 # =======================
 # SETTINGS
 # =======================
-k_values = [0, 5, 10, 20, 30, 40, 50]
+m_values = [0, 5, 10, 20, 30, 40, 50]   # renamed conceptually
 emb_list = ["glove", "word2vec", "gpt2"]
 
-parser.add_argument("--add_consts", nargs="+", type=float, default=[0.001, 0.005, 0.007])
-parser.add_argument("--discounts", nargs="+", type=float, default=[0.6, 0.7, 0.8])
-args = parser.parse_args()
-
 ADD_CONST_LIST = args.add_consts
-KN_DISCOUNT_LIST=args.discounts
+KN_DISCOUNT_LIST = args.discounts
+
+
 # =======================
 # RESULTS STORAGE
 # =======================
@@ -139,18 +162,21 @@ for emb_name in emb_list:
     # =======================
     # ADD-CONSTANT
     # =======================
-    print("Evaluating Add-Constant...")
+    print("Evaluating Additive Smoothing...")
 
     for c in ADD_CONST_LIST:
-        print(f"  c = {c}")
+        print(f"  Add = {c}")
 
-        add_model = AddConstantBigram(topk_cache=synonym_cache, 
-        d_estimate=d_estimate)
-        add_model.fit(train_corpus)
-        add_model.add_constant = c
+        model = AddConstantBigram(
+            add_constant=c,
+            topk_cache=synonym_cache,
+            d_estimate=d_estimate
+        )
 
-        for k in tqdm.tqdm(k_values):
-            ppl = add_model.perplexity(test_corpus, k_syn=k)
+        model.fit(train_corpus)
+
+        for m in tqdm.tqdm(m_values):
+            ppl = model.perplexity(test_corpus, k_syn=m)
             results["add"][emb_name][c].append(ppl)
 
     # =======================
@@ -159,18 +185,18 @@ for emb_name in emb_list:
     print("Evaluating Kneser-Ney...")
 
     for d in KN_DISCOUNT_LIST:
-        print(f"  d = {d}")
+        print(f"  Discount = {d}")
 
-        kn_model = SemanticBigramKneserNey(
+        model = SemanticBigramKneserNey(
             discount=d,
             topk_cache=synonym_cache,
             d_estimate=d_estimate
         )
 
-        kn_model.fit(train_corpus)
+        model.fit(train_corpus)
 
-        for k in tqdm.tqdm(k_values):
-            ppl = kn_model.perplexity(test_corpus, k_syn=k, beta=args.beta)
+        for m in tqdm.tqdm(m_values):
+            ppl = model.perplexity(test_corpus, k_syn=m, beta=args.beta)
             results["kn"][emb_name][d].append(ppl)
 
 
@@ -178,22 +204,28 @@ for emb_name in emb_list:
 # PLOTTING
 # =======================
 
-# -------- ADD CONSTANT --------
+# -------- ADD --------
 for emb in emb_list:
     plt.figure(figsize=(6, 4))
 
+    names = [f"add_{c}" for c in ADD_CONST_LIST]
+    labels = [f"Add = {c}" for c in ADD_CONST_LIST]
+    props_dict = construct_properties_dict(names, labels)
+
     for c in ADD_CONST_LIST:
+        props = props_dict[f"add_{c}"]
+
         plt.plot(
-            k_values,
+            m_values,
             results["add"][emb][c],
-            marker='o',
-            linewidth=2,
-            markersize=6,
-            label=f"c = {c}"
+            color=props["color"],
+            linestyle=props["linestyle"],
+            marker=props["marker"],
+            label=props["label"]
         )
 
-    plt.title(f"{emb.upper()} - Add Constant")
-    plt.xlabel("Number of Synonyms (k)")
+    plt.title(f"{emb.upper()} - Additive Smoothing")
+    plt.xlabel("Number of Synonyms (m)")
     plt.ylabel("Perplexity")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
@@ -208,18 +240,24 @@ for emb in emb_list:
 for emb in emb_list:
     plt.figure(figsize=(6, 4))
 
+    names = [f"kn_{d}" for d in KN_DISCOUNT_LIST]
+    labels = [f"Discount = {d}" for d in KN_DISCOUNT_LIST]
+    props_dict = construct_properties_dict(names, labels)
+
     for d in KN_DISCOUNT_LIST:
+        props = props_dict[f"kn_{d}"]
+
         plt.plot(
-            k_values,
+            m_values,
             results["kn"][emb][d],
-            marker='s',
-            linewidth=2,
-            markersize=6,
-            label=f"d = {d}"
+            color=props["color"],
+            linestyle=props["linestyle"],
+            marker=props["marker"],
+            label=props["label"]
         )
 
     plt.title(f"{emb.upper()} - Kneser-Ney")
-    plt.xlabel("Number of Synonyms (k)")
+    plt.xlabel("Number of Synonyms (m)")
     plt.ylabel("Perplexity")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
@@ -233,37 +271,34 @@ for emb in emb_list:
 # =======================
 # TABLES
 # =======================
-
-# -------- ADD-CONSTANT TABLE --------
 print("\n===== ADD-CONSTANT RESULTS =====")
 
 for emb in emb_list:
     print(f"\n--- {emb.upper()} ---")
 
-    header = "k | " + " | ".join([f"c={c}" for c in ADD_CONST_LIST])
+    header = "m | " + " | ".join([f"Add={c}" for c in ADD_CONST_LIST])
     print(header)
     print("-" * len(header))
 
-    for i, k in enumerate(k_values):
-        row = f"{k:2d} | "
+    for i, m in enumerate(m_values):
+        row = f"{m:2d} | "
         row += " | ".join([
             f"{results['add'][emb][c][i]:8.2f}" for c in ADD_CONST_LIST
         ])
         print(row)
 
 
-# -------- KN TABLE --------
 print("\n===== KNESER-NEY RESULTS =====")
 
 for emb in emb_list:
     print(f"\n--- {emb.upper()} ---")
 
-    header = "k | " + " | ".join([f"d={d}" for d in KN_DISCOUNT_LIST])
+    header = "m | " + " | ".join([f"Discount={d}" for d in KN_DISCOUNT_LIST])
     print(header)
     print("-" * len(header))
 
-    for i, k in enumerate(k_values):
-        row = f"{k:2d} | "
+    for i, m in enumerate(m_values):
+        row = f"{m:2d} | "
         row += " | ".join([
             f"{results['kn'][emb][d][i]:8.2f}" for d in KN_DISCOUNT_LIST
         ])
