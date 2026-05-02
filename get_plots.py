@@ -94,9 +94,15 @@ for emb in ["glove", "word2vec"]:
 plt.xlabel("Number of Synonyms (m)")
 plt.ylabel("Perplexity")
 plt.grid(True)
-plt.legend(ncol=2)
 
-plt.tight_layout()
+plt.legend(
+    loc="center left",
+    bbox_to_anchor=(1.02, 0.5),
+    ncol=1,
+    frameon=False
+)
+
+plt.tight_layout(rect=[0, 0, 0.8, 1])
 plt.savefig("combined_add_constants.pgf")
 plt.savefig("combined_add_constants.pdf")
 plt.close()
@@ -132,9 +138,15 @@ for emb in ["glove", "word2vec"]:
 plt.xlabel("Number of Synonyms (m)")
 plt.ylabel("Perplexity")
 plt.grid(True)
-plt.legend(ncol=2)
 
-plt.tight_layout()
+plt.legend(
+    loc="center left",
+    bbox_to_anchor=(1.02, 0.5),
+    ncol=1,
+    frameon=False
+)
+
+plt.tight_layout(rect=[0, 0, 0.8, 1])
 plt.savefig("combined_kn_discounts.pgf")
 plt.savefig("combined_kn_discounts.pdf")
 plt.close()
