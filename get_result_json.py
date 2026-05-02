@@ -10,6 +10,7 @@ import tqdm
 import argparse
 import os
 import pickle
+import json  # <-- added
 
 from load_embed import load_embeddings
 from load_dataset import load_text_corpus
@@ -188,82 +189,6 @@ for emb_name in emb_list:
 
 
 # =======================
-# PLOTTING
-# =======================
-
-# -------- ADD (GLOVE + WORD2VEC) --------
-plt.figure()
-
-names, labels = [], []
-for emb in ["glove", "word2vec"]:
-    for c in ADD_CONST_LIST:
-        names.append(f"{emb}_add_{c}")
-        labels.append(f"{emb}, c={c}")
-
-props_dict = construct_properties_dict(names, labels)
-
-for emb in ["glove", "word2vec"]:
-    for c in ADD_CONST_LIST:
-        key = f"{emb}_add_{c}"
-        props = props_dict[key]
-
-        plt.plot(
-            m_values,
-            results["add"][emb][c],
-            color=props["color"],
-            linestyle=props["linestyle"],
-            marker=props["marker"],
-            label=props["label"]
-        )
-
-plt.xlabel("Number of Synonyms (m)")
-plt.ylabel("Perplexity")
-plt.grid(True)
-plt.legend(ncol=2)
-
-plt.tight_layout()
-plt.savefig("combined_add_constants.pgf")
-plt.savefig("combined_add_constants.pdf")
-plt.close()
-
-
-# -------- KN (GLOVE + WORD2VEC) --------
-plt.figure()
-
-names, labels = [], []
-for emb in ["glove", "word2vec"]:
-    for d in KN_DISCOUNT_LIST:
-        names.append(f"{emb}_kn_{d}")
-        labels.append(f"{emb}, d={d}")
-
-props_dict = construct_properties_dict(names, labels)
-
-for emb in ["glove", "word2vec"]:
-    for d in KN_DISCOUNT_LIST:
-        key = f"{emb}_kn_{d}"
-        props = props_dict[key]
-
-        plt.plot(
-            m_values,
-            results["kn"][emb][d],
-            color=props["color"],
-            linestyle=props["linestyle"],
-            marker=props["marker"],
-            label=props["label"]
-        )
-
-plt.xlabel("Number of Synonyms (m)")
-plt.ylabel("Perplexity")
-plt.grid(True)
-plt.legend(ncol=2)
-
-plt.tight_layout()
-plt.savefig("combined_kn_discounts.pgf")
-plt.savefig("combined_kn_discounts.pdf")
-plt.close()
-
-
-# =======================
 # TABLES
 # =======================
 print("\n===== ADD-CONSTANT RESULTS =====")
@@ -298,6 +223,17 @@ for emb in emb_list:
             f"{results['kn'][emb][d][i]:8.2f}" for d in KN_DISCOUNT_LIST
         ])
         print(row)
+
+
+# =======================
+# SAVE RESULTS TO JSON
+# =======================
+output_path = os.path.join(BASE_DIR, "results.json")
+
+with open(output_path, "w") as f:
+    json.dump(results, f, indent=4)
+
+print(f"\nResults saved to {output_path}")
 
 
 print("\nAll experiments complete.")
