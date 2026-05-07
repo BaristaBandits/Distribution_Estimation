@@ -19,7 +19,7 @@ import tqdm
 from load_embed import load_embeddings
 from load_dataset import load_text_corpus
 from cache_synonyms import build_cache, Support
-from SemanticBigramKN import SemanticBigramKneserNey  # the class above
+from SemanticKN import SemanticBigramKneserNey  # the class above
 
 # =======================
 # ARGUMENTS
