@@ -40,53 +40,82 @@ class SemanticBigramKneserNey:
     # =======================
     # TRAINING
     # =======================
-    def fit(self, tokenized_sentences, k_syn=5, beta=1):
-        for sent in tokenized_sentences:
-            self.vocab.update(sent)
+    def fit_counts(self, tokenized_sentences):
 
+        for sent in tokenized_sentences:
+    
+            self.vocab.update(sent)
+    
             for w in sent:
                 self.unigram_counts[w] += 1
-
+    
             for i in range(1, len(sent)):
+    
                 h = sent[i - 1]
                 w = sent[i]
-
+    
                 self.bigram_counts[(h, w)] += 1
-
+    
                 self.followers_of_history[h].add(w)
+    
                 self.predecessors_of_word[w].add(h)
+    
+        self.total_bigram_types = len(
+            self.bigram_counts
+        )
 
-        self.total_bigram_types = len(self.bigram_counts)
+    def fit_semantic(self, k_syn=5, beta=1):
 
+        # Reset semantic caches
+        self.semantic_norm_cache = {}
+        self.semantic_lambda_cache = {}
+        self.semantic_cont_cache = {}
+    
         # =======================
         # PRECOMPUTE CONTINUATIONS
         # =======================
         for w in self.vocab:
-            self.semantic_cont_cache[w] = self.semantic_continuation( w, k_syn, beta)
-
+    
+            self.semantic_cont_cache[w] = (
+                self.semantic_continuation(
+                    w,
+                    k_syn,
+                    beta
+                )
+            )
+    
         # =======================
         # GLOBAL CONT SUM
         # =======================
-        self.global_semantic_cont_sum = sum(self.semantic_cont_cache.values())
-
+        self.global_semantic_cont_sum = sum(
+            self.semantic_cont_cache.values()
+        )
+    
         # =======================
         # PRECOMPUTE LAMBDAS
         # =======================
         for h in self.vocab:
-            self.semantic_lambda_cache[h] = self.semantic_lambda(h, k_syn, beta)
-
+    
+            self.semantic_lambda_cache[h] = (
+                self.semantic_lambda(
+                    h,
+                    k_syn,
+                    beta
+                )
+            )
+    
         # =======================
         # PRECOMPUTE NORMALIZERS
         # =======================
         for h in self.vocab:
-
-            # Use Cython if available
-            if CYTHON_AVAILABLE:
-                z = compute_normalizer_cython(self, h,k_syn,beta)
-            else:
-               raise ValueError("Cython is not Available")
-
-
+    
+            z = compute_normalizer_cython(
+                self,
+                h,
+                k_syn,
+                beta
+            )
+    
             self.semantic_norm_cache[h] = z
 
     def base_weight(self, word):
