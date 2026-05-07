@@ -244,24 +244,25 @@ for emb_name in emb_list:
     # SEMANTIC KN
     # ==========================================================
     print("\nEvaluating Semantic KN...")
-
+    
     for d in KN_DISCOUNT_LIST:
     
         print(f"  Discount = {d}")
     
+        # Create model ONCE per discount
+        model = SemanticBigramKneserNey(
+            discount=d,
+            topk_cache=synonym_cache,
+            d_estimate=d_estimate
+        )
+    
+        # Fit counts ONCE
+        model.fit_counts(train_corpus)
+    
         for m in tqdm.tqdm(m_values):
     
-            # NEW MODEL FOR EACH m
-            model = SemanticBigramKneserNey(
-                discount=d,
-                topk_cache=synonym_cache,
-                d_estimate=d_estimate
-            )
-    
-            # IMPORTANT:
-            # fit using same k_syn as evaluation
-            model.fit(
-                train_corpus,
+            # Only recompute semantic layer
+            model.fit_semantic(
                 k_syn=m,
                 beta=args.beta
             )
@@ -275,6 +276,7 @@ for emb_name in emb_list:
             results["semantic_kn"][emb_name][d].append(
                 ppl
             )
+
 
     # ==========================================================
     # NAIVE INTERPOLATED KN
