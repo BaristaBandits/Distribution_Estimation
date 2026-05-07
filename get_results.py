@@ -14,7 +14,7 @@ from load_dataset import load_text_corpus
 
 from AddConstant import AddConstantBigram
 from SemanticKN import SemanticBigramKneserNey
-from baselinemodels import BigramKneserNeyNaive
+from BaselineModels import BigramKneserNeyNaive
 
 from cache_synonyms import build_cache, Support
 
