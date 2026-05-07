@@ -191,7 +191,6 @@ for emb_name in emb_list:
             ppl = model.semantic_perplexity(
                 test_corpus,
                 k_syn=m,
-                beta=args.beta
             )
 
             results["naive_kn"][emb_name][d].append(ppl)
