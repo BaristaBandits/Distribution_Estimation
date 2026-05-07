@@ -165,7 +165,7 @@ class BigramKneserNeyNaive:
     # =======================
     # SEMANTIC PROBABILITY
     # =======================
-    def semantic_prob(self, prev_word, word, k_syn=5, beta = 1):
+    def semantic_prob(self, prev_word, word, k_syn=5):
 
         synonyms = self.topk_cache.get(prev_word, [])[:k_syn]
         if not synonyms:
@@ -184,14 +184,14 @@ class BigramKneserNeyNaive:
         else:
             base_weight = 0.0
 
-        weighted_prob = math.exp(- beta * base_weight) * base_prob
-        total_weight = math.exp(- beta * base_weight)
+        weighted_prob = base_weight * base_prob
+        total_weight = base_weight
 
         for s, weight in synonyms:
             if s != prev_word:
                 prob = self.prob(s, word)
-                weighted_prob += math.exp(- beta * weight) * prob
-                total_weight += math.exp(- beta * weight)
+                weighted_prob += weight * prob
+                total_weight += weight
 
         if total_weight == 0:
             return base_prob
@@ -213,11 +213,11 @@ class BigramKneserNeyNaive:
     # =======================
     # SEMANTIC LOG PROB
     # =======================
-    def sentence_log_prob_semantic(self, sent, k_syn=5, beta =1):
+    def sentence_log_prob_semantic(self, sent, k_syn=5):
         log_prob = 0.0
 
         for i in range(1, len(sent)):
-            p = self.semantic_prob(sent[i - 1], sent[i], k_syn, beta)
+            p = self.semantic_prob(sent[i - 1], sent[i], k_syn)
             log_prob += math.log2(p)
 
         return log_prob
@@ -241,7 +241,7 @@ class BigramKneserNeyNaive:
     # =======================
     # SEMANTIC PERPLEXITY
     # =======================
-    def semantic_perplexity(self, tokenized_sentences, k_syn=5, beta = 1):
+    def semantic_perplexity(self, tokenized_sentences, k_syn=5):
         total_log_prob = 0.0
         total_tokens = 0
 
@@ -249,7 +249,7 @@ class BigramKneserNeyNaive:
             if len(sent) < 2:
                 continue
 
-            total_log_prob += self.sentence_log_prob_semantic(sent, k_syn, beta)
+            total_log_prob += self.sentence_log_prob_semantic(sent, k_syn)
             total_tokens += (len(sent) - 1)
 
         return 2 ** (-total_log_prob / total_tokens)
