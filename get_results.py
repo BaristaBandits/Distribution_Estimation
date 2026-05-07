@@ -13,7 +13,6 @@ from load_embed import load_embeddings
 from load_dataset import load_text_corpus
 
 from AddConstant import AddConstantBigram
-from SemanticKN import SemanticBigramKneserNey
 from BaselineModels import BigramKneserNeyNaive
 
 from cache_synonyms import build_cache, Support
@@ -33,11 +32,7 @@ plt.style.use(style_path)
 # =======================
 # CACHE DIR
 # =======================
-CACHE_DIR = os.path.join(
-    BASE_DIR,
-    "cache"
-)
-
+CACHE_DIR = os.path.join(BASE_DIR, "cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # =======================
@@ -45,23 +40,9 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # =======================
 parser = argparse.ArgumentParser()
 
-parser.add_argument(
-    "--max_sentences",
-    type=int,
-    default=100000
-)
-
-parser.add_argument(
-    "--beta",
-    type=float,
-    default=1.0
-)
-
-parser.add_argument(
-    "--k_cache",
-    type=int,
-    default=50
-)
+parser.add_argument("--max_sentences", type=int, default=100000)
+parser.add_argument("--beta", type=float, default=1.0)
+parser.add_argument("--k_cache", type=int, default=50)
 
 parser.add_argument(
     "--add_consts",
@@ -84,11 +65,7 @@ args = parser.parse_args()
 # =======================
 m_values = [0, 5, 10, 20, 30, 40, 50]
 
-emb_list = [
-    "glove",
-    "word2vec",
-    "gpt2"
-]
+emb_list = ["glove", "word2vec", "gpt2"]
 
 ADD_CONST_LIST = args.add_consts
 KN_DISCOUNT_LIST = args.discounts
@@ -97,28 +74,12 @@ KN_DISCOUNT_LIST = args.discounts
 # RESULTS STORAGE
 # =======================
 results = {
-
     "add": {
-        emb: {
-            c: []
-            for c in ADD_CONST_LIST
-        }
+        emb: {c: [] for c in ADD_CONST_LIST}
         for emb in emb_list
     },
-
-    "semantic_kn": {
-        emb: {
-            d: []
-            for d in KN_DISCOUNT_LIST
-        }
-        for emb in emb_list
-    },
-
     "naive_kn": {
-        emb: {
-            d: []
-            for d in KN_DISCOUNT_LIST
-        }
+        emb: {d: [] for d in KN_DISCOUNT_LIST}
         for emb in emb_list
     }
 }
@@ -127,17 +88,10 @@ results = {
 # CACHE HELPERS
 # =======================
 def cache_path(emb_name):
+    return os.path.join(CACHE_DIR, f"{emb_name}_cache.pkl")
 
-    return os.path.join(
-        CACHE_DIR,
-        f"{emb_name}_cache.pkl"
-    )
 
-def load_or_build_cache(
-    emb_name,
-    train_corpus,
-    embeddings
-):
+def load_or_build_cache(emb_name, train_corpus, embeddings):
 
     path = cache_path(emb_name)
 
@@ -162,14 +116,12 @@ def load_or_build_cache(
         )
 
         with open(path, "wb") as f:
-            pickle.dump(
-                (d_estimate, synonym_cache),
-                f
-            )
+            pickle.dump((d_estimate, synonym_cache), f)
 
         print(f"Saved cache → {path}")
 
     return d_estimate, synonym_cache
+
 
 # =======================
 # MAIN LOOP
@@ -178,34 +130,16 @@ for emb_name in emb_list:
 
     print(f"\n===== Running for {emb_name} =====")
 
-    # =======================
-    # LOAD EMBEDDINGS
-    # =======================
-    embeddings, stoi, itos = load_embeddings(
-        emb_name
-    )
+    embeddings, stoi, itos = load_embeddings(emb_name)
 
-    # =======================
-    # TOKENIZER MODE
-    # =======================
-    tokenizer_mode = (
-        "gpt2"
-        if emb_name == "gpt2"
-        else "word"
-    )
+    tokenizer_mode = "gpt2" if emb_name == "gpt2" else "word"
 
-    # =======================
-    # LOAD DATASET
-    # =======================
     train_corpus, test_corpus = load_text_corpus(
         "wikitext103",
         tokenizer_mode=tokenizer_mode,
         max_sentences=args.max_sentences
     )
 
-    # =======================
-    # LOAD CACHE
-    # =======================
     d_estimate, synonym_cache = load_or_build_cache(
         emb_name,
         train_corpus,
@@ -231,52 +165,9 @@ for emb_name in emb_list:
 
         for m in tqdm.tqdm(m_values):
 
-            ppl = model.perplexity(
-                test_corpus,
-                k_syn=m
-            )
+            ppl = model.perplexity(test_corpus, k_syn=m)
 
-            results["add"][emb_name][c].append(
-                ppl
-            )
-
-    # ==========================================================
-    # SEMANTIC KN
-    # ==========================================================
-    print("\nEvaluating Semantic KN...")
-    
-    for d in KN_DISCOUNT_LIST:
-    
-        print(f"  Discount = {d}")
-    
-        # Create model ONCE per discount
-        model = SemanticBigramKneserNey(
-            discount=d,
-            topk_cache=synonym_cache,
-            d_estimate=d_estimate
-        )
-    
-        # Fit counts ONCE
-        model.fit_counts(train_corpus)
-    
-        for m in tqdm.tqdm(m_values):
-    
-            # Only recompute semantic layer
-            model.fit_semantic(
-                k_syn=m,
-                beta=args.beta
-            )
-    
-            ppl = model.perplexity(
-                test_corpus,
-                k_syn=m,
-                beta=args.beta
-            )
-    
-            results["semantic_kn"][emb_name][d].append(
-                ppl
-            )
-
+            results["add"][emb_name][c].append(ppl)
 
     # ==========================================================
     # NAIVE INTERPOLATED KN
@@ -303,9 +194,8 @@ for emb_name in emb_list:
                 beta=args.beta
             )
 
-            results["naive_kn"][emb_name][d].append(
-                ppl
-            )
+            results["naive_kn"][emb_name][d].append(ppl)
+
 
 # =======================
 # ADDITIVE TABLES
@@ -316,14 +206,7 @@ for emb in emb_list:
 
     print(f"\n--- {emb.upper()} ---")
 
-    header = (
-        "m | "
-        + " | ".join([
-            f"Add={c}"
-            for c in ADD_CONST_LIST
-        ])
-    )
-
+    header = "m | " + " | ".join([f"Add={c}" for c in ADD_CONST_LIST])
     print(header)
     print("-" * len(header))
 
@@ -338,36 +221,6 @@ for emb in emb_list:
 
         print(row)
 
-# =======================
-# SEMANTIC KN TABLES
-# =======================
-print("\n===== SEMANTIC KN RESULTS =====")
-
-for emb in emb_list:
-
-    print(f"\n--- {emb.upper()} ---")
-
-    header = (
-        "m | "
-        + " | ".join([
-            f"Discount={d}"
-            for d in KN_DISCOUNT_LIST
-        ])
-    )
-
-    print(header)
-    print("-" * len(header))
-
-    for i, m in enumerate(m_values):
-
-        row = f"{m:2d} | "
-
-        row += " | ".join([
-            f"{results['semantic_kn'][emb][d][i]:8.2f}"
-            for d in KN_DISCOUNT_LIST
-        ])
-
-        print(row)
 
 # =======================
 # NAIVE KN TABLES
@@ -378,14 +231,7 @@ for emb in emb_list:
 
     print(f"\n--- {emb.upper()} ---")
 
-    header = (
-        "m | "
-        + " | ".join([
-            f"Discount={d}"
-            for d in KN_DISCOUNT_LIST
-        ])
-    )
-
+    header = "m | " + " | ".join([f"Discount={d}" for d in KN_DISCOUNT_LIST])
     print(header)
     print("-" * len(header))
 
@@ -400,18 +246,14 @@ for emb in emb_list:
 
         print(row)
 
+
 # =======================
 # SAVE RESULTS
 # =======================
-output_path = os.path.join(
-    BASE_DIR,
-    "results.json"
-)
+output_path = os.path.join(BASE_DIR, "results.json")
 
 with open(output_path, "w") as f:
-
-    json.dump(results,f,indent=4)
+    json.dump(results, f, indent=4)
 
 print(f"\nResults saved to {output_path}")
-
 print("\nAll experiments complete.")
