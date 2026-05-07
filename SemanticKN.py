@@ -9,6 +9,7 @@ try:
 except:
     CYTHON_AVAILABLE = False
 
+print("CYTHON availability: ", CYTHON_AVAILABLE)
 
 class SemanticBigramKneserNey:
     def __init__(self, discount=0.75, topk_cache=None, d_estimate=None):
