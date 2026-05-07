@@ -84,7 +84,8 @@ class SemanticBigramKneserNey:
             if CYTHON_AVAILABLE:
                 z = compute_normalizer_cython(self, h,k_syn,beta)
             else:
-                z = self._semantic_normalizer_python(h, k_syn, beta)
+               raise ValueError("Cython is not Available")
+
 
             self.semantic_norm_cache[h] = z
 
