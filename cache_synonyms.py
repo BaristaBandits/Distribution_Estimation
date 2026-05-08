@@ -333,7 +333,7 @@ def build_cache(train_corpus, support, embeddings, k=50):
       diff = candidate_matrix - prev_vec
       Delta = np.linalg.norm(diff, axis=1, ord = 1) * max_norm
       #error = base_term + Delta + np.sqrt(Delta) * np.log(d_est_vec + n_vec)
-      error = base_term + Delta +  np.log(1 + (0.005 * d_est_vec / n_vec))
+      error = Delta +  np.log(1 + (0.005 * d_est_vec / n_vec))
 
       weights = 1.0 / (error)
       top_idx = np.argpartition(weights, -k)[-k:]
