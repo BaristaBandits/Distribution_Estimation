@@ -20,7 +20,7 @@ sudo apt-get install -y fonts-freefont-ttf
 ### Run to get results
 
 ```python
-!python3 Distribution_Estimation/get_plots.py --add_consts 0.003 0.005 0.007 --discounts 0.5 0.6 0.7
+!python3 Distribution_Estimation/get_results.py --add_consts 0.003 0.005 0.007 --discounts 0.5 0.6 0.7
 ```
 
     [nltk_data] Downloading package punkt_tab to /root/nltk_data...
